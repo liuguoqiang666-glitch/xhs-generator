@@ -3,776 +3,659 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>意帜-小红书B端排版神器 V6.0 (数据导入+贴纸系统)</title>
+    <title>L-YIEZHII-小红书V9.0 (内部通用版)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
         :root {
+            /* 品牌色 */
+            --primary-color: #ff2442;
+            --bg-body: #f4f6f8;
+            --bg-panel: #ffffff;
+            
+            /* 排版变量 */
             --bg-color: #FDFBF7;
             --text-primary: #2C2C2C;
             --text-secondary: #555555;
             --accent-color: #D4C4B7;
             --highlight: #E65A5A;
-            --font-stack: "Alibaba PuHuiTi 2.0", "Alibaba PuHuiTi", "Noto Sans SC", "PingFang SC", sans-serif;
+            --line-color: #d1d1d1;
+            
+            --font-stack: "Alibaba PuHuiTi 2.0", "Noto Sans SC", sans-serif;
             --title-size: 32px;
             --list-size: 14px;
             --list-gap: 12px;
-            --card-padding: 35px;
             --title-align: left; 
+            --card-padding: 35px;
         }
 
         body {
             font-family: var(--font-stack);
-            background-color: #eef2f5;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background-color: var(--bg-body);
+            margin: 0; padding: 20px;
             min-height: 100vh;
+            display: flex; justify-content: center;
+            overflow-x: hidden; /* 防止横向滚动 */
         }
 
-        /* === 控制面板 === */
-        .controls {
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 950px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .control-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        .control-row:last-child { border-bottom: none; padding-bottom: 0; }
-
-        .control-label {
-            font-weight: bold;
-            font-size: 14px;
-            color: #333;
-            min-width: 70px;
-            display: flex; align-items: center; gap: 5px;
-        }
-
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-        .btn-primary { background-color: #ff2442; color: white; box-shadow: 0 4px 12px rgba(255, 36, 66, 0.3); }
-        .btn-primary:hover { background-color: #e01b36; transform: translateY(-1px); }
-        .btn-action { background-color: #f0f0f0; color: #333; }
-        .btn-action:hover { background-color: #e0e0e0; }
-
-        select, input[type="text"], textarea {
-            padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; outline: none; font-family: inherit;
+        /* === 🔐 登录遮罩层 === */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1a1a1a; /* 深色背景更显高端 */
+            z-index: 9999;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: white;
+            transition: opacity 0.5s ease;
         }
         
-        .style-selector { display: flex; gap: 10px; flex-wrap: wrap; }
-        .style-opt { padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 13px; background: #fff; }
-        .style-opt.active { border-color: #ff2442; color: #ff2442; background: #fff0f2; font-weight: bold; }
-
-        .color-palette { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-theme { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; cursor: pointer; transition: transform 0.2s; }
-        .btn-theme.active { border-color: #333; transform: scale(1.15); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-
-        /* === 预览区域 === */
-        .preview-container {
-            display: flex; gap: 40px; flex-wrap: wrap; justify-content: center;
+        .login-box {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        /* === 核心卡片样式 === */
+        .login-logo {
+            width: 120px; height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #ff2442;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(255, 36, 66, 0.4);
+        }
+
+        .login-title {
+            font-size: 24px; font-weight: 900; letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .login-input {
+            padding: 12px 20px;
+            border-radius: 30px;
+            border: 1px solid #555;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            width: 200px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .login-input:focus { border-color: #ff2442; box-shadow: 0 0 10px rgba(255, 36, 66, 0.3); }
+
+        .login-btn {
+            margin-top: 20px;
+            padding: 10px 40px;
+            border-radius: 30px;
+            border: none;
+            background: linear-gradient(45deg, #ff2442, #ff5f57);
+            color: white; font-weight: bold; cursor: pointer;
+            transition: 0.3s;
+        }
+        .login-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(255, 36, 66, 0.4); }
+
+        /* === 🛡️ 背景水印 (登录后显示) === */
+        .bg-watermark {
+            position: fixed; bottom: 20px; right: 20px;
+            opacity: 0.05; pointer-events: none; z-index: 0;
+            width: 300px;
+        }
+
+        /* === 主容器 === */
+        .app-container { display: flex; width: 100%; max-width: 1400px; gap: 30px; align-items: flex-start; filter: blur(5px); transition: 0.5s; pointer-events: none; }
+        .app-container.unlocked { filter: blur(0); pointer-events: auto; }
+
+        /* 左侧侧边栏 */
+        .sidebar { width: 380px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 5px; z-index: 100; }
+        .sidebar::-webkit-scrollbar { width: 0; }
+
+        /* 预览区 */
+        .main-preview { flex: 1; display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; padding-bottom: 50px; position: relative; z-index: 1; }
+
+        /* 面板样式 */
+        .control-panel { background: var(--bg-panel); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .tabs { display: flex; border-bottom: 1px solid #eee; background: #fff; position: sticky; top:0; z-index: 10; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: 600; color: #666; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .panel-content { padding: 20px; display: none; }
+        .panel-content.active { display: block; }
+
+        /* 控件 */
+        .control-group { margin-bottom: 20px; border-bottom: 1px dashed #eee; padding-bottom: 15px; }
+        .control-group:last-child { border: none; margin: 0; padding: 0; }
+        .group-title { font-size: 12px; color: #999; font-weight: 700; margin-bottom: 8px; }
+        input[type="text"], textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; box-sizing: border-box; outline: none; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        .btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; }
+        .btn-primary { background: var(--primary-color); color: white; width: 100%; font-size: 15px; }
+        .btn-secondary { background: #f0f2f5; color: #333; }
+        .btn-secondary:hover { background: #e1e4e8; }
+
+        /* 风格选择器 */
+        .visual-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .visual-opt { border: 2px solid #eee; border-radius: 6px; cursor: pointer; overflow: hidden; transition: 0.2s; display: flex; flex-direction: column; }
+        .visual-opt.active { border-color: var(--primary-color); box-shadow: 0 0 0 1px var(--primary-color); }
+        .visual-preview { height: 35px; width: 100%; background: #f5f5f5; }
+        .visual-label { font-size: 10px; text-align: center; padding: 3px; background: #fff; color: #333; }
+        .vp-lined { background: repeating-linear-gradient(transparent, transparent 9px, #ccc 10px); background-color: #fff; }
+        .vp-grid { background-image: linear-gradient(#ddd 1px, transparent 1px), linear-gradient(90deg, #ddd 1px, transparent 1px); background-size: 10px 10px; background-color: #fff; }
+        .vp-gold { background: #fff; border-bottom: 4px solid #C5A065; }
+        .vp-mac { background: #fff; border-top: 8px solid #eee; }
+        .color-dots { display: flex; gap: 8px; }
+        .color-dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #eee; cursor: pointer; }
+        .color-dot.active { transform: scale(1.2); border-color: #333; }
+
+        /* === 核心卡片 === */
         .xhs-card {
-            width: 450px; height: 600px; /* 3:4 */
+            width: 450px; height: 600px;
             background-color: var(--bg-color);
             padding: var(--card-padding);
             box-sizing: border-box;
             display: flex; flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             position: relative; overflow: hidden;
             font-family: var(--font-stack);
+            color: var(--text-primary);
             transition: all 0.3s ease;
-            background-size: cover; background-position: center;
         }
 
-        /* 贴纸元素样式 */
-        .sticker-item {
-            position: absolute;
-            cursor: move;
-            z-index: 100; /* 确保在最上层 */
-            user-select: none;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-            transition: transform 0.1s;
+        /* 列表项 (修复点击编辑) */
+        .list-item {
+            display: flex !important; flex-direction: row !important; align-items: flex-start;
+            width: 100%; margin-bottom: var(--list-gap); font-size: var(--list-size); line-height: 1.5;
+            position: relative;
+            z-index: 5; /* 提升层级，确保在背景之上 */
+            cursor: text; /* 提示可编辑 */
         }
-        .sticker-item:hover { transform: scale(1.05); }
-        .sticker-item img { max-width: 100px; max-height: 100px; pointer-events: none; }
-        .sticker-text {
-            padding: 5px 15px; border: 3px solid currentColor; border-radius: 8px;
-            font-weight: 900; font-size: 24px; transform: rotate(-15deg);
-            background: rgba(255,255,255,0.8);
-            white-space: nowrap; pointer-events: none;
+        .list-item:hover { background: rgba(0,0,0,0.02); border-radius: 4px; } /* 编辑时高亮 */
+
+        .item-index {
+            flex-shrink: 0; margin-right: 8px; font-weight: 800; color: var(--accent-color);
+            min-width: 20px; text-align: center; pointer-events: none; /* 序号不可编辑，防误触 */
+        }
+        .item-info { flex: 1; min-width: 0; word-wrap: break-word; text-align: left !important; outline: none; }
+        .brand-name { font-weight: 700; color: var(--text-primary); margin-right: 5px; }
+        .item-text { color: var(--text-secondary); }
+
+        .index-style-badge {
+            background: var(--accent-color); 
+            color: #fff !important; 
+            border-radius: 4px; padding: 0 4px;
+            font-size: 0.9em; height: auto;
+            display: inline-block; line-height: 1.4;
         }
 
-        /* === 纸张风格 CSS 定义 (保持 V5.2 全部风格) === */
-        /* 0. 基础 */
-        .paper-lined { background-image: repeating-linear-gradient(transparent, transparent 39px, #d1d1d1 40px); background-size: 100% 40px; background-position: 0 0; background-color: #fff; padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 35px; padding-right: 35px; }
-        .paper-lined .card-header { height: 120px; margin-bottom: 0; border-bottom: none; box-sizing: border-box; padding-top: 30px; display: block; }
-        .paper-lined .main-title { background: #fff; padding: 5px 10px; border-bottom: 3px solid #333; line-height: 1.2; display: inline-block; }
-        .paper-lined .list-item { height: 40px; line-height: 40px !important; align-items: flex-start; margin-bottom: 0 !important; padding-bottom: 0 !important; padding-top: 2px; box-sizing: border-box; }
-        .paper-lined .item-info { line-height: 40px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-header {
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--accent-color);
+            text-align: var(--title-align); flex-shrink: 0; z-index: 5;
+        }
+        .main-title {
+            display: inline-block; font-weight: 900; font-size: var(--title-size);
+            line-height: 1.3; color: var(--text-primary); margin: 0; outline: none;
+        }
 
-        .paper-spiral { background-color: #fcf9f2; padding-left: 60px !important; }
-        .paper-spiral::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 20px; background-image: radial-gradient(#dccbb6 20%, transparent 25%); background-size: 30px 30px; border-right: 4px double #eee; }
-        .paper-spiral::after { content: ''; position: absolute; right: -30px; bottom: 40px; width: 150px; height: 30px; background: rgba(250, 225, 120, 0.8); transform: rotate(-45deg); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .sticker-item { position: absolute; cursor: move; z-index: 100; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .sticker-item:hover { transform: scale(1.05); border: 1px dashed #ccc; }
+        .sticker-text { padding: 5px 15px; border: 3px solid currentColor; border-radius: 8px; font-weight: 900; font-size: 24px; background: rgba(255,255,255,0.9); pointer-events: none; }
+        .sticker-item img { max-width: 100px; pointer-events: none; }
 
-        .paper-yellow-pad { background-color: #FFD954; padding: 50px 30px 30px 30px !important; }
-        .paper-yellow-pad .inner-sheet { background: #fff; width: 100%; height: 100%; border-radius: 10px; padding: 25px; box-sizing: border-box; position: relative; box-shadow: 2px 2px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .paper-yellow-pad .inner-sheet::before { content: ''; position: absolute; top: -15px; left: 0; right: 0; height: 20px; background-image: radial-gradient(#FFD954 30%, transparent 31%); background-size: 40px 100%; background-repeat: repeat-x; }
+        /* === 风格 CSS === */
+        .paper-lined .list-item, .paper-draft-grid .list-item, .paper-yellow-bar .list-item, .paper-mac-grid .list-item, .paper-date-lined .list-item, .paper-dashed .list-item, .paper-grid-browser .list-item { height: 40px !important; line-height: 40px !important; margin-bottom: 0 !important; align-items: center !important; }
+        .paper-lined .item-info, .paper-draft-grid .item-info, .paper-grid-browser .item-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .paper-phone { background-color: #f7f7f7; padding-top: 60px !important; }
-        .paper-phone::before { content: '‹ 备忘录'; position: absolute; top: 0; left: 0; right: 0; height: 50px; display: flex; align-items: center; padding-left: 20px; color: #ECB318; font-weight: bold; font-size: 16px; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); border-bottom: 1px solid #e0e0e0; z-index: 10; }
-        .paper-phone .card-header { padding-left: 10px; border-bottom: none; }
-
-        /* 1. V4.6 风格 */
-        .paper-yellow-app { background-color: #FDFCF6; padding-top: 60px !important; }
-        .paper-yellow-app::before { content: '‹ SHIYEBIAN'; position: absolute; top: 0; left: 0; right: 0; height: 50px; display: flex; align-items: center; padding-left: 20px; color: #FFB84C; font-weight: bold; font-size: 16px; z-index: 10; }
-        .paper-yellow-app::after { content: '•••'; position: absolute; top: 12px; right: 20px; color: #FFB84C; font-size: 14px; padding: 2px 8px; border: 1px solid #FFB84C; border-radius: 10px; }
-        .paper-yellow-app-footer { position: absolute; bottom: -60px; left: -35px; width: 450px; height: 60px; background: #FDFCF6; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; }
-        .icon-mock { width: 24px; height: 24px; border: 2px solid #FFB84C; border-radius: 4px; }
-        .icon-circle { border-radius: 50%; }
-
-        .paper-rounded { background-color: #dcdcdc; padding: 20px !important; }
-        .paper-rounded .inner-sheet { background: #fff; width: 100%; height: 100%; border-radius: 25px; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
-        .paper-rounded .card-header { border-bottom: none; padding-bottom: 0; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .paper-rounded .main-title { color: #FFA500; font-size: 20px; }
-        .paper-rounded .header-icons { display: flex; gap: 10px; }
-        .icon-star { color: #ff3b30; font-size: 20px; }
-        .icon-bubble { color: #FFA500; font-size: 20px; border: 2px solid #FFA500; border-radius: 4px; width: 18px; height: 18px; }
-
-        .paper-texture { background-color: #f7f7f7; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E"); padding-bottom: 60px !important; }
-        .paper-texture .card-header { border-bottom: none; text-align: left !important; padding-top: 10px; display: flex; align-items: center; gap: 10px; }
-        .paper-texture .card-header::before { content: '‹'; font-size: 30px; color: #FFB800; font-weight: 300; margin-top: -5px; }
-        .paper-texture .main-title { color: #FFB800; font-size: 20px; }
-        .paper-texture-footer { position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; background: #e0e0e0; border-top: 1px solid #ccc; display: flex; justify-content: flex-end; align-items: center; gap: 20px; padding-right: 30px; }
-        .icon-gray { width: 20px; height: 20px; border: 2px solid #666; border-radius: 4px; }
-        .icon-bell { border-radius: 50% 50% 0 0; }
-
-        .paper-minimal { background-color: #fff; padding-top: 60px !important; }
-        .paper-minimal::before { content: '‹'; position: absolute; top: 15px; left: 20px; font-size: 30px; color: #FFB800; font-weight: 300; }
-        .paper-minimal::after { content: '↶ ↷ ↥ •••'; position: absolute; top: 22px; right: 20px; font-size: 20px; color: #FFB800; letter-spacing: 15px; font-weight: bold; }
-        .paper-minimal .card-header { border-bottom: none; }
-
-        /* 2. V4.9 风格 */
-        .paper-grid-browser { background-color: #fff; background-image: linear-gradient(#f0f0f0 1px, transparent 1px), linear-gradient(90deg, #f0f0f0 1px, transparent 1px); background-size: 20px 20px; border: 3px solid #000; border-radius: 12px; margin: 10px; height: calc(600px - 20px); width: calc(450px - 20px); padding: 50px 20px !important; }
+        .paper-default { background-image: none !important; border: none; }
+        .paper-lined { background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 40px); background-size: 100% 40px; padding: 0 35px !important; padding-top: 125px !important; }
+        .paper-lined .card-header { position: absolute; top: 40px; left: 35px; right: 35px; margin: 0; border: none; padding: 0; height: auto; }
+        .paper-lined .main-title { background: var(--bg-color); padding: 5px 10px; border-bottom: 3px solid var(--text-primary); }
+        .paper-phone { padding-top: 60px !important; background-image: none !important; }
+        .paper-phone::before { content: '‹ 备忘录'; position: absolute; top:0; left:0; width:100%; height:50px; display:flex; align-items:center; padding-left:20px; font-weight:bold; background:rgba(255,255,255,0.8); border-bottom:1px solid #ddd; color:#E6B800; z-index:5; }
+        .paper-phone .item-index { color: #E6B800; }
+        .paper-phone .index-style-badge { background: #E6B800; color: #fff !important; }
+        .paper-grid-browser { background-image: linear-gradient(var(--line-color) 1px, transparent 1px), linear-gradient(90deg, var(--line-color) 1px, transparent 1px); background-size: 20px 20px; border: 3px solid var(--text-primary); border-radius: 12px; margin: 10px; height: calc(600px - 20px); width: calc(450px - 20px); padding: 50px 20px !important; }
         .paper-grid-browser::before { content: '● ● ●'; position: absolute; top: 15px; left: 25px; font-size: 12px; word-spacing: 5px; color: transparent; text-shadow: 0 0 0 #ff5f57, 15px 0 0 #ffbd2e, 30px 0 0 #28ca41; }
-        .paper-grid-browser .card-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .paper-grid-browser-footer { position: absolute; bottom: 10px; left: 0; width: 100%; height: 40px; border-top: 2px solid #000; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-family: 'Roboto Mono', monospace; font-weight: 700; font-size: 12px; }
-
-        .paper-macos { background-color: #fff; border: 1px solid #d1d1d1; border-radius: 8px; padding-top: 50px !important; margin: 10px; height: calc(600px - 20px); width: calc(450px - 20px); }
-        .paper-macos::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40px; background: linear-gradient(#eee, #ddd); border-bottom: 1px solid #ccc; border-radius: 8px 8px 0 0; z-index: 1; }
-        .paper-macos::after { content: ''; position: absolute; top: 12px; left: 15px; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #28ca41; z-index: 2; }
-        .paper-macos-bar { position: absolute; top: 8px; left: 80px; right: 50px; height: 24px; background: #fff; border: 1px solid #ccc; border-radius: 4px; z-index: 2; }
-
-        .paper-date-lined { background-color: #fff; background-image: repeating-linear-gradient(transparent, transparent 39px, #ccc 40px); background-size: 100% 40px; padding-top: 60px !important; }
-        .paper-date-lined::before { content: 'Date ___________'; position: absolute; top: 20px; left: 35px; font-family: cursive; font-size: 20px; color: #333; }
-        .paper-date-lined .list-item { height: 40px; line-height: 40px !important; align-items: flex-start; margin-bottom: 0 !important; padding-top: 2px; }
-        .paper-date-lined .item-info { line-height: 40px !important; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-
-        .paper-dashed { background-color: #fbfbfb; background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='39' x2='100%25' y2='39' stroke='%23cccccc' stroke-width='1' stroke-dasharray='5,5'/%3E%3C/svg%3E"); padding-top: 40px !important; }
-        .paper-dashed .list-item { height: 40px; line-height: 40px !important; align-items: flex-start; margin-bottom: 0 !important; padding-top: 2px; }
-        .paper-dashed .item-info { line-height: 40px !important; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-
-        .paper-gold { background-color: #fff; padding-top: 60px !important; padding-bottom: 80px !important; }
-        .paper-gold::before { content: '备忘录'; font-weight: bold; position: absolute; top: 20px; left: 20px; color: #C5A065; font-size: 16px; }
-        .paper-gold::after { content: '🔍 + ☰'; position: absolute; top: 20px; right: 20px; color: #C5A065; font-size: 18px; letter-spacing: 10px; }
-        .paper-gold .card-header { border-bottom: none; }
-        .paper-gold .main-title { color: #C5A065; }
-        .paper-gold-footer { position: absolute; bottom: 20px; right: 20px; width: 100px; height: 60px; display: flex; flex-direction: column; align-items: center; }
-        .building-roof { width: 0; height: 0; border-left: 55px solid transparent; border-right: 55px solid transparent; border-bottom: 15px solid #C9B28F; }
-        .building-body { width: 100px; height: 40px; background: repeating-linear-gradient(90deg, #C9B28F, #C9B28F 5px, #fff 5px, #fff 10px); border: 2px solid #C9B28F; border-top: none; }
-
-        /* V5.0 新增风格 */
-        .paper-draft-grid { background-color: #fff; background-image: linear-gradient(to right, #ddd 1px, transparent 1px), linear-gradient(to bottom, #ddd 1px, transparent 1px); background-size: 20px 20px; padding-top: 50px !important; padding-bottom: 50px !important; }
+        .paper-grid-browser .card-header { border-bottom: 2px solid var(--text-primary); margin-bottom: 0; padding-bottom: 10px; }
+        .paper-yellow-app { padding-top: 60px !important; background-image: none !important; }
+        .paper-yellow-app::before { content: '‹ SHIYEBIAN'; position: absolute; top:0; left:0; width:100%; height:50px; display:flex; align-items:center; padding-left:20px; font-weight:bold; color:#FFB84C; z-index:5; }
+        .paper-yellow-app .item-index { color: #FFB84C; }
+        .paper-yellow-app .index-style-badge { background: #FFB84C; color: #fff !important; }
+        .paper-rounded { background-color: #dcdcdc !important; padding: 20px !important; background-image: none !important; }
+        .paper-rounded .inner-sheet-wrapper { background: var(--bg-color); height: 100%; border-radius: 25px; padding: 30px; box-sizing:border-box; display:flex; flex-direction:column; }
+        .paper-rounded .card-header { border: none; }
+        .paper-mac-grid { border: 1px solid #ccc; border-radius: 10px; margin: 10px; height: calc(600px - 20px); width: calc(450px - 20px); padding-top: 50px !important; background-image: linear-gradient(var(--line-color) 1px, transparent 1px), linear-gradient(90deg, var(--line-color) 1px, transparent 1px); background-size: 20px 20px; background-position: 0 50px; }
+        .paper-mac-grid::before { content:''; position: absolute; top:0; left:0; right:0; height:45px; background:rgba(0,0,0,0.05); border-bottom:1px solid #ccc; border-radius:10px 10px 0 0; z-index:1; }
+        .paper-mac-grid::after { content:''; position: absolute; top:15px; left:15px; width:10px; height:10px; background:#ff5f57; border-radius:50%; box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #28ca41; z-index:2; }
+        .paper-texture { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E") !important; padding-top: 20px !important; padding-bottom: 60px !important; }
+        .paper-texture .card-header { border: none; display: flex; align-items: center; gap: 10px; }
+        .paper-texture .card-header::before { content: '‹'; font-size: 30px; color: #FFB800; font-weight: 300; margin-top: -5px; }
+        .paper-draft-grid { background-image: linear-gradient(to right, var(--line-color) 1px, transparent 1px), linear-gradient(to bottom, var(--line-color) 1px, transparent 1px); background-size: 20px 20px; padding: 50px 20px !important; }
         .paper-draft-grid::before { content: ''; position: absolute; top: 35px; left: 30px; right: 30px; height: 2px; background: #888; }
         .paper-draft-grid::after { content: ''; position: absolute; bottom: 35px; left: 30px; right: 30px; height: 2px; background: #888; }
-        .paper-draft-grid .card-header { border-bottom: none; }
-
-        .paper-yellow-bar { background-color: #fff; background-image: repeating-linear-gradient(transparent, transparent 39px, #f0f0f0 40px); background-size: 100% 40px; padding-top: 80px !important; }
+        .paper-draft-grid .card-header { border: none; }
+        .paper-yellow-bar { background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 40px); background-size: 100% 40px; padding-top: 80px !important; }
         .paper-yellow-bar::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 70px; background: #F8D868; z-index: 1; }
         .paper-yellow-bar::after { content: '08:05 📶 🔋'; position: absolute; top: 5px; left: 20px; right: 20px; text-align: right; color: #333; font-size: 12px; font-weight: bold; z-index: 2; }
-        .paper-yellow-bar .card-header { position: absolute; top: 25px; left: 0; width: 100%; z-index: 3; border: none; padding: 0 20px; box-sizing: border-box; text-align: left; }
-        .paper-yellow-bar .main-title { color: #E68A00; background: transparent; padding: 0; border: none; font-size: 24px; }
-        .paper-yellow-bar .list-item { height: 40px; line-height: 40px !important; align-items: flex-start; margin-bottom: 0 !important; padding-top: 2px; }
-        .paper-yellow-bar .item-info { line-height: 40px !important; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-
-        .paper-mac-grid { background-color: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding-top: 50px !important; margin: 10px; height: calc(600px - 20px); width: calc(450px - 20px); background-image: linear-gradient(#f5f5f5 1px, transparent 1px), linear-gradient(90deg, #f5f5f5 1px, transparent 1px); background-size: 20px 20px; background-position: 0 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .paper-mac-grid::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45px; background: #f0f0f0; border-bottom: 1px solid #ddd; border-radius: 10px 10px 0 0; z-index: 1; }
-        .paper-mac-grid::after { content: ''; position: absolute; top: 15px; left: 15px; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #28ca41; z-index: 2; }
-        .mac-grid-tools { position: absolute; top: 12px; left: 90px; z-index: 2; display: flex; gap: 5px; }
-        .mac-tool-icon { width: 24px; height: 18px; border: 1px solid #ccc; border-radius: 3px; background: #fff; }
-
-        /* V5.1 修复 */
-        .paper-yellow-lite { background-color: #fff; padding-top: 60px !important; }
-        .paper-yellow-lite .card-header { border-bottom: none; text-align: left; padding: 0 20px; display: block; }
+        .paper-yellow-bar .card-header { position: absolute; top: 25px; left: 0; width: 100%; z-index: 3; border: none; padding: 0 20px; text-align: left; }
+        .paper-yellow-bar .main-title { color: #E68A00; background: transparent; padding: 0; border: none; }
+        .paper-yellow-bar .item-index { color: #E68A00; }
+        .paper-yellow-bar .index-style-badge { background: #E68A00; color: #fff !important; }
+        .paper-yellow-lite { padding-top: 60px !important; background-image: none !important; }
+        .paper-yellow-lite .card-header { border: none; text-align: left; padding: 0 20px; display: block; }
         .paper-yellow-lite::before { content: '‹ 全部备忘录'; position: absolute; top: 20px; left: 20px; color: #E6B800; font-size: 18px; font-weight: bold; }
         .paper-yellow-lite::after { content: '📤 ⋯'; position: absolute; top: 20px; right: 20px; color: #E6B800; font-size: 20px; letter-spacing: 10px; }
         .paper-yellow-lite .main-title { display: block; margin-top: 10px; margin-bottom: 10px; color: #E6B800; }
-        .paper-yellow-lite .card-content { margin-top: 0; }
-
-        .paper-bottom-line { background-color: #fff; padding-top: 60px !important; padding-bottom: 40px !important; }
-        .paper-bottom-line::before { content: '‹ 备忘录'; position: absolute; top: 20px; left: 20px; color: #FF9933; font-size: 18px; font-weight: bold; }
-        .paper-bottom-line::after { content: '📤 ⋯'; position: absolute; top: 20px; right: 20px; color: #FF9933; font-size: 20px; letter-spacing: 10px; }
-        .paper-bottom-line-footer { position: absolute; bottom: 30px; left: 20px; right: 20px; height: 2px; background: #E0C090; }
+        .paper-yellow-lite .item-index { color: #E6B800; }
+        .paper-yellow-lite .index-style-badge { background: #E6B800; color: #fff !important; }
+        .paper-bottom-line { padding-top: 60px !important; padding-bottom: 40px !important; background-image: none !important; }
+        .paper-bottom-line::before { content: '‹ 备忘录'; position:absolute; top:20px; left:20px; font-weight:bold; color:#FF9933; font-size:18px; }
+        .paper-bottom-line::after { content: '📤 ⋯'; position:absolute; top:20px; right:20px; color:#FF9933; font-size:20px; letter-spacing:10px; }
+        .paper-bottom-line-footer { position:absolute; bottom:30px; left:20px; right:20px; height:2px; background:#E0C090; display:none; }
+        .paper-bottom-line .paper-bottom-line-footer { display:block; }
         .paper-bottom-line .main-title { display: block; color: #FF9933; margin-bottom: 15px; }
-
-
-        /* === 公共部分 === */
-        .card-header {
-            margin-bottom: 15px; padding-bottom: 15px;
-            border-bottom: 2px solid var(--accent-color);
-            text-align: var(--title-align, left); 
-            flex-shrink: 0; z-index: 2;
-        }
-        .main-title {
-            font-weight: 900; color: var(--text-primary); margin: 0; line-height: 1.3;
-            font-size: var(--title-size); outline: none; display: inline-block; 
-        }
-
-        .card-content { flex: 1; display: flex; flex-direction: column; gap: var(--list-gap); z-index: 2; }
-
-        /* 列表项 */
-        .list-item {
-            display: flex; width: 100%;
-            flex-direction: row; align-items: flex-start; justify-content: flex-start; text-align: left;
-            font-size: var(--list-size); line-height: 1.6; color: var(--text-primary); outline: none;
-        }
-        .item-info { flex: 1; text-align: left; }
-        
-        .item-index { font-weight: 800; color: var(--accent-color); margin-right: 8px; flex-shrink: 0; width: 24px; text-align: center; }
-        
-        /* 颜色适配 */
-        .paper-phone .item-index, .paper-yellow-app .item-index, .paper-minimal .item-index, .paper-gold .item-index, .paper-yellow-bar .item-index, .paper-yellow-lite .item-index, .paper-bottom-line .item-index { color: #FFB800; }
+        .paper-bottom-line .item-index { color: #FF9933; }
+        .paper-bottom-line .index-style-badge { background: #FF9933; color: #fff !important; }
+        .paper-gold { padding-top: 60px !important; padding-bottom: 80px !important; background-image: none !important; }
+        .paper-gold::before { content: '备忘录'; font-weight: bold; position: absolute; top: 20px; left: 20px; color: #C5A065; font-size: 16px; }
+        .paper-gold::after { content: '🔍 + ☰'; position: absolute; top: 20px; right: 20px; color: #C5A065; font-size: 18px; letter-spacing: 10px; }
+        .paper-gold .card-header { border: none; }
+        .paper-gold .main-title { color: #C5A065; }
         .paper-gold .item-index { color: #C5A065; }
-        .paper-lined .item-index, .paper-date-lined .item-index, .paper-dashed .item-index, .paper-draft-grid .item-index { color: #aaa; font-style: italic; font-family: 'Georgia', serif; }
+        .paper-gold .index-style-badge { background: #C5A065; color: #fff !important; }
+        .paper-macos { border: 1px solid #ccc; border-radius: 8px; padding-top: 50px !important; margin: 10px; height: calc(600px - 20px); width: calc(450px - 20px); background-image: none !important; }
+        .paper-macos::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40px; background: linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.1)); border-bottom: 1px solid var(--line-color); border-radius: 8px 8px 0 0; z-index: 1; }
+        .paper-macos::after { content: ''; position: absolute; top: 12px; left: 15px; width: 10px; height: 10px; background:#ff5f57; border-radius:50%; box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #28ca41; z-index: 2; }
+        .paper-macos-bar { position: absolute; top: 8px; left: 80px; right: 50px; height: 24px; background: var(--bg-color); border: 1px solid var(--line-color); border-radius: 4px; z-index: 2; }
+        .paper-date-lined { background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 40px); background-size: 100% 40px; padding-top: 60px !important; }
+        .paper-date-lined::before { content: 'Date ___________'; position: absolute; top: 20px; left: 35px; font-family: cursive; font-size: 20px; color: var(--text-primary); }
+        .paper-dashed { background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='39' x2='100%25' y2='39' stroke='%23cccccc' stroke-width='1' stroke-dasharray='5,5'/%3E%3C/svg%3E"); padding-top: 40px !important; }
+        .paper-spiral { padding-left: 60px !important; padding-top: 35px !important; background-image: none !important; }
+        .paper-spiral::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 20px; background-image: radial-gradient(var(--accent-color) 20%, transparent 25%); background-size: 30px 30px; border-right: 4px double #eee; }
+        .paper-minimal { padding-top: 60px !important; background-image: none !important; }
+        .paper-minimal::before { content: '‹'; position: absolute; top: 15px; left: 20px; font-size: 30px; color: #FFB800; font-weight: 300; }
+        .paper-minimal::after { content: '↶ ↷ ↥ •••'; position: absolute; top: 22px; right: 20px; font-size: 20px; color: #FFB800; letter-spacing: 15px; font-weight: bold; }
+        .paper-minimal .item-index { color: #FFB800; }
+        .paper-minimal .index-style-badge { background: #FFB800; color: #fff !important; }
 
-        /* 修复胶囊序号Bug：移除对list-item的干扰，只作用于index */
-        .index-style-badge { 
-            background: var(--accent-color); color: #fff; border-radius: 6px; 
-            font-size: 12px; width: 20px; height: 20px; line-height: 20px; 
-            margin-top: 3px; display: inline-block; 
-        }
-        .paper-phone .index-style-badge, .paper-yellow-app .index-style-badge, .paper-yellow-bar .index-style-badge { background: #FFB800; }
-        .paper-gold .index-style-badge { background: #C5A065; }
-
-        .brand-name { font-weight: 700; color: var(--text-primary); }
-        .item-text { color: var(--text-secondary); margin-left: 2px; }
-
-        .my-brand .brand-name { color: var(--highlight); font-weight: 900; }
-        .my-brand .item-index { color: var(--highlight); }
-        .my-brand.index-style-badge .item-index { background: var(--highlight); color: #fff; }
-
-        .custom-bg-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background-size: cover; background-position: center; z-index: 0; opacity: 1; pointer-events: none; }
+        /* 弹窗 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 600px; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; gap: 10px; max-height: 80vh; }
+        .data-list { flex: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; }
+        .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f9f9f9; padding: 5px 0; }
 
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <div class="control-row" style="background:#f9f9f9; padding:10px; border-radius:8px;">
-            <span class="control-label">📋 数据导入:</span>
-            <div style="flex:1; display:flex; gap:10px; flex-direction:column;">
-                <textarea id="dataInput" placeholder="直接粘贴您的名单，格式：店铺名 档口号 推荐语 (每行一条，空格分隔)&#10;例如：韩系馆 9意法123 爆款推荐" style="width: 95%; height: 50px; font-size: 12px; border:1px solid #ccc;"></textarea>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:11px; color:#666;">* 系统会自动解析并替换下方列表，同时保留“意帜”推广位。</span>
-                    <button class="btn-primary" onclick="importData()">📥 一键生成排版</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="control-row">
-            <span class="control-label">🖼️ 贴纸:</span>
-            <input type="file" id="logoUpload" accept="image/*" onchange="addLogoSticker(this)" style="display:none;">
-            <button class="btn-action" onclick="document.getElementById('logoUpload').click()">➕ 上传Logo</button>
-            
-            <div style="display:flex; gap:5px; margin-left:10px;">
-                <button class="btn-action" onclick="addTextSticker('必逛', '#ff2442')">🔴 必逛</button>
-                <button class="btn-action" onclick="addTextSticker('避雷', '#000')">⚫ 避雷</button>
-                <button class="btn-action" onclick="addTextSticker('店主自留', '#E68A00')">🟠 自留</button>
-                <button class="btn-action" onclick="addTextSticker('爆款', '#ff5f57')">🔥 爆款</button>
-            </div>
-            <span style="font-size:11px; color:#999; margin-left:auto;">(可拖拽移动，双击删除)</span>
-        </div>
-
-        <div class="control-row">
-            <button class="btn-action" onclick="generateNewData()">🎲 随机排序 (仅内置数据)</button>
-            <button class="btn-action" onclick="downloadImages()">⬇️ 下载图片</button>
-            
-            <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
-                <span style="font-size:12px; color:#666;">更换背景:</span>
-                <input type="file" id="bgUpload" accept="image/*" onchange="handleBgUpload(this)" style="font-size:12px;">
-            </div>
-        </div>
-
-        <div class="control-row">
-            <span class="control-label">📃 风格库:</span>
-            <div class="style-selector">
-                <div class="style-opt active" onclick="setPaperStyle('default', this)">极简纯色</div>
-                <div class="style-opt" onclick="setPaperStyle('lined', this)">经典横线(15)</div>
-                <div class="style-opt" onclick="setPaperStyle('spiral', this)">螺旋线圈</div>
-                <div class="style-opt" onclick="setPaperStyle('yellow', this)">黄色便签</div>
-                <div class="style-opt" onclick="setPaperStyle('phone', this)">手机备忘</div>
-                <div class="style-opt" onclick="setPaperStyle('yellow-app', this)">🟡 简约应用</div>
-                <div class="style-opt" onclick="setPaperStyle('rounded', this)">🖼️ 圆角卡片</div>
-                <div class="style-opt" onclick="setPaperStyle('texture', this)">📜 纹理信纸</div>
-                <div class="style-opt" onclick="setPaperStyle('minimal', this)">⚡ 极简导航</div>
-                <div class="style-opt" onclick="setPaperStyle('grid-browser', this)">🌐 网格浏览器</div>
-                <div class="style-opt" onclick="setPaperStyle('macos', this)">🖥️ MacOS窗口</div>
-                <div class="style-opt" onclick="setPaperStyle('date-lined', this)">📅 日期横线</div>
-                <div class="style-opt" onclick="setPaperStyle('dashed', this)">✂️ 虚线信纸</div>
-                <div class="style-opt" onclick="setPaperStyle('gold', this)">🏛️ 金色典藏</div>
-                <div class="style-opt" onclick="setPaperStyle('draft-grid', this)">📐 工程制图</div>
-                <div class="style-opt" onclick="setPaperStyle('yellow-bar', this)">📒 黄底备忘</div>
-                <div class="style-opt" onclick="setPaperStyle('mac-grid', this)">🖥️ Mac网格</div>
-                <div class="style-opt" onclick="setPaperStyle('yellow-lite', this)">🟡 极简黄字</div>
-                <div class="style-opt" onclick="setPaperStyle('bottom-line', this)">➖ 底部线框</div>
-            </div>
-        </div>
-
-        <div class="control-row">
-            <span class="control-label">🔢 序号:</span>
-            <select id="indexStyleSelect" onchange="renderCurrentData()">
-                <option value="circle">空心圆 (①)</option>
-                <option value="solid">实心黑 (❶)</option>
-                <option value="pad">补零 (01)</option>
-                <option value="badge">胶囊 (■)</option>
-                <option value="dot">简约 (1.)</option>
-            </select>
-
-            <span class="control-label" style="margin-left:15px">Aa 字体:</span>
-            <select onchange="updateFont(this.value)">
-                <option value='"Alibaba PuHuiTi 2.0", "Alibaba PuHuiTi", "Noto Sans SC", sans-serif'>阿里巴巴普惠体</option>
-                <option value='"PingFang SC", "Microsoft YaHei", sans-serif'>系统黑体</option>
-                <option value='"Songti SC", "SimSun", serif'>文艺宋体</option>
-                <option value='"Kaiti SC", "KaiTi", serif'>手写楷体</option>
-            </select>
-        </div>
-
-        <div class="control-row">
-            <span class="control-label">📐 标题:</span>
-            <div style="display:flex; gap:5px; margin-right:15px;">
-                <button class="btn-action" onclick="setAlignment('left')" title="标题左对齐">⬅️</button>
-                <button class="btn-action" onclick="setAlignment('center')" title="标题居中">⬇️</button>
-                <button class="btn-action" onclick="setAlignment('right')" title="标题右对齐">➡️</button>
-            </div>
-
-            <input type="text" id="titleInput" value="四季青热门大码档口分享" oninput="syncTitle()" style="width:160px;" placeholder="输入标题">
-            <label style="font-size:12px;"><input type="checkbox" id="breakTitleCheck" onchange="syncTitle()" checked> 换行</label>
-            
-            <span style="font-size:12px; margin-left:10px; color:#666;">标题字号:</span>
-            <input type="range" min="20" max="60" value="32" oninput="updateCSSVar('--title-size', this.value + 'px')">
-            
-            <span class="control-label" style="margin-left:15px">📑 正文:</span>
-            <span style="font-size:12px; margin-left:5px; color:#666;">字号:</span>
-            <input type="range" min="12" max="18" value="14" oninput="updateCSSVar('--list-size', this.value + 'px')">
-            <span style="font-size:12px; margin-left:5px; color:#666;">行距:</span>
-            <input type="range" min="8" max="40" value="12" id="gapSlider" oninput="updateCSSVar('--list-gap', this.value + 'px')">
-        </div>
-
-        <div class="control-row" id="colorRow">
-            <span class="control-label">🎨 配色:</span>
-            <div class="color-palette">
-                <button class="btn-theme active" style="background:#FDFBF7;" onclick="setTheme(0)"></button>
-                <button class="btn-theme" style="background:#F0F4F8;" onclick="setTheme(1)"></button>
-                <button class="btn-theme" style="background:#F1F5EB;" onclick="setTheme(2)"></button>
-                <button class="btn-theme" style="background:#F6F0F8;" onclick="setTheme(3)"></button>
-                <button class="btn-theme" style="background:#FFFFFF;" onclick="setTheme(4)"></button>
-                <button class="btn-theme" style="background:#333; border-color:#555;" onclick="setTheme(5)"></button>
-            </div>
+    <div id="login-overlay">
+        <div class="login-box">
+            <img src="logo.jpg" class="login-logo" onerror="this.style.display='none'">
+            <div class="login-title">YIEZHII内部通用版</div>
+            <input type="password" class="login-input" id="tokenInput" placeholder="输入密钥解锁">
+            <br>
+            <button class="login-btn" onclick="checkToken()">进入系统</button>
         </div>
     </div>
 
-    <div class="preview-container">
-        <div class="xhs-card" id="card1">
-            <div class="custom-bg-overlay"></div> 
-            <div class="inner-sheet-wrapper"> 
-                <div class="paper-macos-bar" style="display:none;"></div>
-                <div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
-                <div class="card-header">
-                    <h1 class="main-title" contenteditable="true">四季青热门<br>大码档口分享</h1>
-                    <div class="header-icons" style="display:none;">
-                        <span class="icon-star">★</span> <span class="icon-bubble"></span>
+    <img src="logo.jpg" class="bg-watermark" onerror="this.style.display='none'">
+
+    <div class="app-container" id="app">
+        <aside class="sidebar">
+            <div class="control-panel">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('content')">📝 内容</button>
+                    <button class="tab-btn" onclick="switchTab('style')">🎨 风格</button>
+                    <button class="tab-btn" onclick="switchTab('details')">🛠️ 微调</button>
+                </div>
+
+                <div id="tab-content" class="panel-content active">
+                    <div class="control-group">
+                        <div class="group-title">标题内容</div>
+                        <input type="text" id="titleInput" value="四季青热门大码档口分享" oninput="syncTitle()" style="margin-bottom:5px;">
+                        <label style="font-size:12px;"><input type="checkbox" id="breakTitleCheck" onchange="syncTitle()" checked> 自动换行</label>
+                    </div>
+                    <div class="control-group">
+                        <div class="group-title">数据管理</div>
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <button class="btn btn-secondary" onclick="openDataManager()" style="flex:1">📂 管理数据</button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('impArea').style.display='block'" style="flex:1">📋 导入</button>
+                        </div>
+                        <div id="impArea" style="display:none;">
+                            <textarea id="importText" placeholder="粘贴内容..." style="height:60px;"></textarea>
+                            <button class="btn btn-primary" style="margin-top:5px; padding:5px;" onclick="importData()">确认导入</button>
+                        </div>
                     </div>
                 </div>
-                <div class="card-content" id="list1"></div>
-                <div class="paper-yellow-app-footer" style="display:none;">
-                    <div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div>
-                </div>
-                <div class="paper-texture-footer" style="display:none;">
-                    <div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div>
-                </div>
-                <div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
-                <div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
-                <div class="paper-bottom-line-footer" style="display:none;"></div>
-            </div>
-        </div>
-        
-        <div class="xhs-card" id="card2">
-            <div class="custom-bg-overlay"></div>
-            <div class="inner-sheet-wrapper">
-                <div class="paper-macos-bar" style="display:none;"></div>
-                <div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
-                <div class="card-header">
-                    <h1 class="main-title" contenteditable="true">四季青热门<br>大码档口分享</h1>
-                    <div class="header-icons" style="display:none;">
-                        <span class="icon-star">★</span> <span class="icon-bubble"></span>
+
+                <div id="tab-style" class="panel-content">
+                    <div class="control-group">
+                        <div class="group-title">点击选择风格</div>
+                        <div class="visual-selector">
+                            <div class="visual-opt active" onclick="setPaperStyle('default', this)"><div class="visual-preview" style="background:#FDFBF7"></div><div class="visual-label">极简</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">横线</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('phone', this)"><div class="visual-preview" style="background:#f7f7f7; border-top:5px solid #eee;"></div><div class="visual-label">备忘录</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('grid-browser', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">网格</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('gold', this)"><div class="visual-preview vp-gold"></div><div class="visual-label">金色</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('macos', this)"><div class="visual-preview vp-mac"></div><div class="visual-label">Mac</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('yellow-app', this)"><div class="visual-preview" style="background:#FDFCF6; border-top:3px solid orange;"></div><div class="visual-label">APP</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('rounded', this)"><div class="visual-preview" style="background:#ccc; padding:3px;"><div style="background:#fff; height:100%"></div></div><div class="visual-label">圆角</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('mac-grid', this)"><div class="visual-preview" style="background:#fff; border-top:8px solid #eee;"></div><div class="visual-label">Mac网</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('texture', this)"><div class="visual-preview" style="background:#f0f0f0;"></div><div class="visual-label">纹理</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('draft-grid', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">工程</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('yellow-bar', this)"><div class="visual-preview" style="background:#fff; border-top:10px solid #F8D868"></div><div class="visual-label">黄栏</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('yellow-lite', this)"><div class="visual-preview" style="background:#fff; border-left:3px solid #E6B800"></div><div class="visual-label">极简黄</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('bottom-line', this)"><div class="visual-preview" style="background:#fff; border-bottom:3px solid #E0C090"></div><div class="visual-label">底线</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('date-lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">日期</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('dashed', this)"><div class="visual-preview" style="border-bottom:1px dashed #ccc; background:#f9f9f9"></div><div class="visual-label">虚线</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('spiral', this)"><div class="visual-preview" style="background:#fcf9f2; border-left:5px double #ccc;"></div><div class="visual-label">螺旋</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('minimal', this)"><div class="visual-preview" style="background:#fff;"></div><div class="visual-label">极简2</div></div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="group-title">主题配色</div>
+                        <div class="color-dots">
+                            <div class="color-dot active" style="background:#FDFBF7" onclick="setTheme(0)"></div>
+                            <div class="color-dot" style="background:#F0F4F8" onclick="setTheme(1)"></div>
+                            <div class="color-dot" style="background:#F1F5EB" onclick="setTheme(2)"></div>
+                            <div class="color-dot" style="background:#F6F0F8" onclick="setTheme(3)"></div>
+                            <div class="color-dot" style="background:#FFFFFF; border:1px solid #ddd;" onclick="setTheme(4)"></div>
+                            <div class="color-dot" style="background:#333" onclick="setTheme(5)"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="card-content" id="list2"></div>
-                <div class="paper-yellow-app-footer" style="display:none;">
-                    <div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div>
+
+                <div id="tab-details" class="panel-content">
+                    <div class="control-group">
+                        <div class="group-title">排版对齐</div>
+                        <div style="display:flex; gap:5px; margin-bottom:10px;">
+                            <button class="btn btn-secondary" style="flex:1" onclick="updateCSSVar('--title-align', 'left')">⬅️ 左</button>
+                            <button class="btn btn-secondary" style="flex:1" onclick="updateCSSVar('--title-align', 'center')">⬇️ 中</button>
+                            <button class="btn btn-secondary" style="flex:1" onclick="updateCSSVar('--title-align', 'right')">➡️ 右</button>
+                        </div>
+                        <div class="input-row">
+                            <span style="font-size:12px;">序号:</span>
+                            <select id="indexStyleSelect" onchange="renderCurrentData()" style="flex:1">
+                                <option value="circle">空心圆 (①)</option>
+                                <option value="solid">实心黑 (❶)</option>
+                                <option value="pad">补零 (01)</option>
+                                <option value="badge">胶囊 (■)</option>
+                                <option value="dot">简约 (1.)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="group-title">尺寸滑块</div>
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:12px;">标题字号</span>
+                                <input type="range" min="20" max="50" value="32" oninput="updateCSSVar('--title-size', this.value + 'px')" style="width:60%">
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:12px;">正文字号</span>
+                                <input type="range" min="12" max="18" value="14" oninput="updateCSSVar('--list-size', this.value + 'px')" style="width:60%">
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:12px;">行间距</span>
+                                <input type="range" id="gapSlider" min="5" max="40" value="12" oninput="updateCSSVar('--list-gap', this.value + 'px')" style="width:60%">
+                            </div>
+                            <div id="gapInfo" style="display:none; text-align:right; font-size:10px; color:#ff2442;">(当前风格固定行高)</div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="group-title">装饰贴纸</div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                            <button class="btn btn-secondary" onclick="document.getElementById('logoUpload').click()">➕ Logo</button>
+                            <input type="file" id="logoUpload" hidden onchange="addLogo(this)">
+                            <button class="btn btn-secondary" onclick="addSticker('必逛', '#ff2442')">🔴 必逛</button>
+                            <button class="btn btn-secondary" onclick="addSticker('避雷', '#000')">⚫ 避雷</button>
+                            <button class="btn btn-secondary" onclick="addSticker('爆款', '#E68A00')">🔥 爆款</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="paper-texture-footer" style="display:none;">
-                    <div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div>
-                </div>
-                <div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
-                <div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
-                <div class="paper-bottom-line-footer" style="display:none;"></div>
             </div>
+
+            <div style="margin-top:20px; background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+                <button class="btn btn-primary" onclick="generateNewData()">🎲 随机生成</button>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn btn-secondary" style="flex:1" onclick="downloadImages()">⬇️ 下载</button>
+                    <button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('bgUpload').click()">🖼️ 换图</button>
+                    <input type="file" id="bgUpload" hidden onchange="changeBg(this)">
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-preview">
+            <div class="xhs-card" id="card1">
+                <div class="custom-bg-overlay"></div>
+                <div class="inner-sheet-wrapper">
+                    <div class="paper-macos-bar" style="display:none;"></div>
+                    <div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
+                    <div class="card-header">
+                        <h1 class="main-title" contenteditable="true">标题</h1>
+                        <div class="header-icons" style="display:none;"><span class="icon-star">★</span> <span class="icon-bubble"></span></div>
+                    </div>
+                    <div class="card-content" id="list1"></div>
+                    <div class="paper-yellow-app-footer" style="display:none;"><div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div></div>
+                    <div class="paper-texture-footer" style="display:none;"><div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div></div>
+                    <div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
+                    <div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
+                    <div class="paper-bottom-line-footer" style="display:none;"></div>
+                </div>
+            </div>
+            <div class="xhs-card" id="card2">
+                <div class="custom-bg-overlay"></div>
+                <div class="inner-sheet-wrapper">
+                    <div class="paper-macos-bar" style="display:none;"></div>
+                    <div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
+                    <div class="card-header">
+                        <h1 class="main-title" contenteditable="true">标题</h1>
+                        <div class="header-icons" style="display:none;"><span class="icon-star">★</span> <span class="icon-bubble"></span></div>
+                    </div>
+                    <div class="card-content" id="list2"></div>
+                    <div class="paper-yellow-app-footer" style="display:none;"><div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div></div>
+                    <div class="paper-texture-footer" style="display:none;"><div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div></div>
+                    <div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
+                    <div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
+                    <div class="paper-bottom-line-footer" style="display:none;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="dataManagerModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>数据管理 <button onclick="closeDataManager()" style="float:right; border:none; background:none; cursor:pointer; font-size:16px;">✕</button></h3>
+            <div class="data-list" id="dataList"></div>
+            <button class="btn btn-secondary" style="color:red;" onclick="resetData()">重置所有数据</button>
         </div>
     </div>
 
 <script>
-    // === V5.2 核心推广文案库 ===
-    const myBrandInfo = {
-        name: "意帜", loc: "9意法5182",
-        descs: ["拒绝市场通货，原创设计不撞款力推！", "独家开版定染，市面稀缺好货强推！", "风格差异化，轻松留住老客户必逛！", "品质好强推！原创设计不撞款力推！", "实体店都在拿，错过拍大腿强推！", "闭眼拿不踩雷，老客回头率高必逛！", "拿回去没对手，整条街独一份力推！", "告别土味大码，原创设计不撞款强推！", "独家原创设计，整条街都不撞款必逛！", "这种调性大码，别家真没有力推！", "必拿档口！品质版型都很绝！强推！"]
-    };
-
-    // 默认内置数据 (竞争对手池)
-    let otherBrandsData = [
-        {name: "h.h", loc: "9意法1281", desc: "韩系小清新风格，很减龄"}, {name: "慧芝", loc: "9意法5123", desc: "甜酷少女风，胖mm凸显曲线美"}, {name: "sto", loc: "9意法2169", desc: "日常通勤风，简约不挑人"}, {name: "艾贝梵", loc: "9意法5136", desc: "新中式风格，温婉大气"}, {name: "3apple", loc: "9意法5103", desc: "基础日常款多，利用率高"}, {name: "tmi", loc: "9意法5157", desc: "韩系甜美，温柔清新田园风"}, {name: "FAFA", loc: "9意法5160", desc: "气质韩系，甜美与休闲潮酷兼备"}, {name: "油菜", loc: "9意法5179", desc: "韩系甜美田园风，主打连衣裙"}, {name: "PPGL", loc: "9意法5191", desc: "专业大码女装裤"}, {name: "WOOWD", loc: "9意法5155", desc: "韩系大码原创风，甜美复古"}, {name: "青孜", loc: "9意法5150", desc: "实穿与时尚兼备，全品类简约"}, {name: "fbyk", loc: "9意法5151", desc: "主打防晒服和套装"}, {name: "six", loc: "9意法5128", desc: "棉麻亚麻小衫，休闲显瘦"}, {name: "百家欢", loc: "9意法5126", desc: "中高端大码，包容性强"}, {name: "乃粒", loc: "9意法5176", desc: "通勤风，针织类档口"}, {name: "沫森图", loc: "9意法2169", desc: "简约韩系通勤，穿搭风"}, {name: "怪怪树", loc: "9意法3215", desc: "欧韩大版休闲风，孕妈可穿"}, {name: "YOLI", loc: "9意法4279", desc: "防晒衫是必拿款"}, {name: "OUKA", loc: "9意法4255", desc: "主打T恤及防晒衬衫"}, {name: "董与陈", loc: "意法4080", desc: "大码连衣裙专营"}, {name: "牛牛", loc: "清江2012", desc: "日系大码，品类多"}, {name: "译外", loc: "清江1067", desc: "棉麻民族风、国风"}, {name: "熊姑娘", loc: "清江", desc: "甜美森系，可可爱爱"}, {name: "迷妮", loc: "清江2楼", desc: "复古休闲棉麻，舒适"}, {name: "疯子", loc: "清江1008", desc: "文艺大妈中性调"}, {name: "布壹贰", loc: "清江3039", desc: "复古做旧棉麻，有质感"}, {name: "璞田夕", loc: "清江3001", desc: "民族风，苎麻棉麻"}, {name: "达令", loc: "环北2楼", desc: "日韩休闲风，好穿"}, {name: "石九", loc: "东大楼2楼", desc: "性冷淡日系原创休闲"}, {name: "zaozao", loc: "中星a6", desc: "原创日系，有格调松弛风"}, {name: "小森林", loc: "常青2楼", desc: "甜美少女风格"}, {name: "小姐妹", loc: "常青2楼", desc: "文艺小清新"}, {name: "小日子", loc: "中星2036", desc: "韩系休闲，日常"}, {name: "韩国馆", loc: "环北2185", desc: "亮色复古风，善用大撞色"}, {name: "本源", loc: "新杭派160", desc: "日系休闲风，文艺复古"}, {name: "阿北", loc: "中星b150", desc: "复古森系，氛围感"}, {name: "Miao", loc: "新杭派B333", desc: "老钱风极简风大码"}, {name: "wive", loc: "9意法5098", desc: "大码女孩的极简老钱风"}, {name: "豌豆家", loc: "9中星036", desc: "韩休闲松弛慵懒风"}, {name: "n.ge", loc: "老意法2275", desc: "日系棉麻森系大码"}, {name: "SEVENTEEN", loc: "9意法2169", desc: "极简轻奢，芝麻类"}, {name: "草堂", loc: "9意法5196", desc: "森系棉麻复古类大码"}, {name: "RRZBB", loc: "9新意法345", desc: "日系复古山系舒适风"}, {name: "buer", loc: "9常青6007", desc: "极简原创设计，潮流大码"}
-    ];
-
-    let currentPage1Data = [], currentPage2Data = [];
-    const indexMaps = {
-        circle: ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑲','⑲','⑳','㉑','㉒','㉓','㉔'],
-        solid: ['❶','❷','❸','❹','❺','❻','❼','❽','❾','❿','⓫','⓬','⓭','⓮','⓯','⓰','⓱','⓲','⓳','⓴','㉑','㉒','㉓','㉔']
-    };
-
-    // === V6.0 新增: 数据解析与导入 ===
-    function importData() {
-        const input = document.getElementById('dataInput').value.trim();
-        if(!input) { alert("请先粘贴数据！"); return; }
-        
-        const lines = input.split('\n');
-        const newData = [];
-        
-        lines.forEach(line => {
-            // 简单的空格分割逻辑，适应复制粘贴格式
-            const parts = line.trim().split(/\s+/); 
-            if(parts.length >= 1) {
-                const name = parts[0];
-                const loc = parts[1] || "";
-                // 剩余部分都算作推荐语
-                const desc = parts.slice(2).join(" ") || "暂无描述";
-                newData.push({name, loc, desc});
-            }
-        });
-
-        if(newData.length > 0) {
-            // 替换内置数据池
-            otherBrandsData = newData;
-            alert(`成功导入 ${newData.length} 条数据！`);
-            generateNewData(); // 重新生成，依然会混入“意帜”
+    // 登录校验逻辑
+    function checkToken() {
+        const token = document.getElementById('tokenInput').value.trim().toUpperCase();
+        if(token === 'ALINDM') {
+            document.getElementById('login-overlay').style.opacity = '0';
+            document.getElementById('app').classList.add('unlocked');
+            setTimeout(() => { document.getElementById('login-overlay').style.display='none'; }, 500);
         } else {
-            alert("解析失败，请检查格式");
+            alert('密钥错误，请联系管理员');
         }
     }
 
-    // === V6.0 新增: 贴纸系统 ===
-    function makeDraggable(el) {
-        let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
+    // 回车登录
+    document.getElementById('tokenInput').addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') checkToken();
+    });
 
-        el.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            initialLeft = el.offsetLeft;
-            initialTop = el.offsetTop;
-            el.style.cursor = 'grabbing';
-        });
+    // ... (以下为核心功能 JS，保持不变) ...
+    const myBrand = { name: "意帜", loc: "9意法5182", descs: ["拒绝市场通货，原创设计不撞款力推！", "独家开版定染，市面稀缺好货强推！", "风格差异化，轻松留住老客户必逛！", "品质好强推！原创设计不撞款力推！", "实体店都在拿，错过拍大腿强推！", "闭眼拿不踩雷，老客回头率高必逛！", "拿回去没对手，整条街独一份力推！", "告别土味大码，原创设计不撞款强推！", "独家原创设计，整条街都不撞款必逛！", "这种调性大码，别家真没有力推！", "必拿档口！品质版型都很绝！强推！"] };
+    const defaultData = [{name: "h.h", loc: "9意法1281", desc: "韩系小清新风格，很减龄"}, {name: "慧芝", loc: "9意法5123", desc: "甜酷少女风，胖mm凸显曲线美"}, {name: "sto", loc: "9意法2169", desc: "日常通勤风，简约不挑人"}, {name: "艾贝梵", loc: "9意法5136", desc: "新中式风格，温婉大气"}, {name: "3apple", loc: "9意法5103", desc: "基础日常款多，利用率高"}, {name: "tmi", loc: "9意法5157", desc: "韩系甜美，温柔清新田园风"}, {name: "FAFA", loc: "9意法5160", desc: "气质韩系，甜美与休闲潮酷兼备"}, {name: "油菜", loc: "9意法5179", desc: "韩系甜美田园风，主打连衣裙"}, {name: "PPGL", loc: "9意法5191", desc: "专业大码女装裤"}, {name: "WOOWD", loc: "9意法5155", desc: "韩系大码原创风，甜美复古"}, {name: "青孜", loc: "9意法5150", desc: "实穿与时尚兼备，全品类简约"}, {name: "fbyk", loc: "9意法5151", desc: "主打防晒服和套装"}, {name: "six", loc: "9意法5128", desc: "棉麻亚麻小衫，休闲显瘦"}, {name: "百家欢", loc: "9意法5126", desc: "中高端大码，包容性强"}, {name: "乃粒", loc: "9意法5176", desc: "通勤风，针织类档口"}, {name: "沫森图", loc: "9意法2169", desc: "简约韩系通勤，穿搭风"}, {name: "怪怪树", loc: "9意法3215", desc: "欧韩大版休闲风，孕妈可穿"}, {name: "YOLI", loc: "9意法4279", desc: "防晒衫是必拿款"}, {name: "OUKA", loc: "9意法4255", desc: "主打T恤及防晒衬衫"}, {name: "董与陈", loc: "意法4080", desc: "大码连衣裙专营"}, {name: "牛牛", loc: "清江2012", desc: "日系大码，品类多"}, {name: "译外", loc: "清江1067", desc: "棉麻民族风、国风"}, {name: "熊姑娘", loc: "清江", desc: "甜美森系，可可爱爱"}, {name: "迷妮", loc: "清江2楼", desc: "复古休闲棉麻，舒适"}, {name: "疯子", loc: "清江1008", desc: "文艺大妈中性调"}, {name: "布壹贰", loc: "清江3039", desc: "复古做旧棉麻，有质感"}, {name: "璞田夕", loc: "清江3001", desc: "民族风，苎麻棉麻"}, {name: "达令", loc: "环北2楼", desc: "日韩休闲风，好穿"}, {name: "石九", loc: "东大楼2楼", desc: "性冷淡日系原创休闲"}, {name: "zaozao", loc: "中星a6", desc: "原创日系，有格调松弛风"}, {name: "小森林", loc: "常青2楼", desc: "甜美少女风格"}, {name: "小姐妹", loc: "常青2楼", desc: "文艺小清新"}, {name: "小日子", loc: "中星2036", desc: "韩系休闲，日常"}, {name: "韩国馆", loc: "环北2185", desc: "亮色复古风，善用大撞色"}, {name: "本源", loc: "新杭派160", desc: "日系休闲风，文艺复古"}, {name: "阿北", loc: "中星b150", desc: "复古森系，氛围感"}, {name: "Miao", loc: "新杭派B333", desc: "老钱风极简风大码"}, {name: "wive", loc: "9意法5098", desc: "大码女孩的极简老钱风"}, {name: "豌豆家", loc: "9中星036", desc: "韩休闲松弛慵懒风"}, {name: "n.ge", loc: "老意法2275", desc: "日系棉麻森系大码"}, {name: "SEVENTEEN", loc: "9意法2169", desc: "极简轻奢，芝麻类"}, {name: "草堂", loc: "9意法5196", desc: "森系棉麻复古类大码"}, {name: "RRZBB", loc: "9新意法345", desc: "日系复古山系舒适风"}, {name: "buer", loc: "9常青6007", desc: "极简原创设计，潮流大码"}];
+    let brands = JSON.parse(localStorage.getItem('xhs_brands')) || [...defaultData];
+    const indexMaps = { circle: ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑲','⑲','⑳','㉑','㉒','㉓','㉔'], solid: ['❶','❷','❸','❹','❺','❻','❼','❽','❾','❿','⓫','⓬','⓭','⓮','⓯','⓰','⓱','⓲','⓳','⓴','㉑','㉒','㉓','㉔'] };
 
-        window.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                el.style.left = `${initialLeft + dx}px`;
-                el.style.top = `${initialTop + dy}px`;
-            }
-        });
-
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            el.style.cursor = 'move';
-        });
-        
-        // 双击删除
-        el.addEventListener('dblclick', () => {
-            el.remove();
-        });
-    }
-
-    function addLogoSticker(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                createSticker(e.target.result, 'image');
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    function addTextSticker(text, color) {
-        createSticker(text, 'text', color);
-    }
-
-    function createSticker(content, type, color) {
-        document.querySelectorAll('.xhs-card').forEach(card => {
-            const sticker = document.createElement('div');
-            sticker.className = 'sticker-item';
-            sticker.style.left = '50px'; // 默认初始位置
-            sticker.style.top = '100px';
-            
-            if(type === 'image') {
-                sticker.innerHTML = `<img src="${content}" alt="logo">`;
-            } else {
-                sticker.innerHTML = `<div class="sticker-text" style="color:${color}; border-color:${color}">${content}</div>`;
-            }
-            
-            card.appendChild(sticker);
-            makeDraggable(sticker);
-        });
-    }
-
-    // === 核心逻辑 ===
-    function shuffle(arr) {
-        let a = [...arr];
-        for (let i = a.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [a[i], a[j]] = [a[j], a[i]];
-        }
-        return a;
+    function updateCSSVar(key, val) { document.documentElement.style.setProperty(key, val); }
+    function switchTab(id) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-' + id).classList.add('active');
     }
 
     function generateNewData() {
-        const rand = Math.random();
-        let myPosIndex = 0; 
-        if (rand >= 0.6 && rand < 0.8) myPosIndex = 1; 
-        else if (rand >= 0.8) myPosIndex = 2; 
-
-        const myBrandDesc = myBrandInfo.descs[Math.floor(Math.random() * myBrandInfo.descs.length)];
-        const myBrandObj = { name: myBrandInfo.name, loc: myBrandInfo.loc, desc: myBrandDesc, isMine: true };
-
-        // 如果用户导入数据很少，也要能显示
-        let competitors = shuffle(otherBrandsData);
-        if(competitors.length > 23) competitors = competitors.slice(0, 23); // 截取前23个(留给私货)
+        const perPage = Math.floor(Math.random() * 4) + 10;
+        const total = perPage * 2;
+        const ad = { name: myBrand.name, loc: myBrand.loc, desc: myBrand.descs[Math.floor(Math.random()*myBrand.descs.length)], isMine: true };
         
-        let p1Count = Math.min(11, Math.ceil(competitors.length / 2));
-        let p1 = competitors.slice(0, p1Count);
+        let pool = [...brands].sort(() => 0.5 - Math.random());
+        while(pool.length < total - 1) { pool = pool.concat([...brands]); }
+        let selected = pool.slice(0, total - 1);
         
-        // 插入私货
-        if(p1.length >= myPosIndex) {
-             p1.splice(myPosIndex, 0, myBrandObj);
-        } else {
-             p1.push(myBrandObj);
-        }
+        const pos = Math.floor(Math.random() * 3);
+        selected.splice(pos, 0, ad);
         
-        currentPage1Data = p1;
-        currentPage2Data = competitors.slice(p1Count);
-
-        renderCurrentData();
-    }
-
-    function getIndexHTML(index, style) {
-        const realIndex = index + 1;
-        let content = `${realIndex}.`;
-        if (style === 'circle') content = indexMaps.circle[index] || realIndex;
-        else if (style === 'solid') content = indexMaps.solid[index] || realIndex;
-        else if (style === 'pad') content = realIndex < 10 ? `0${realIndex}` : realIndex;
-        else if (style === 'badge') content = realIndex;
-        return `<span class="item-index index-style-${style}">${content}</span>`;
-    }
-
-    function renderCurrentData() {
-        const style = document.getElementById('indexStyleSelect').value;
-        renderList(document.getElementById('list1'), currentPage1Data, 0, style);
-        // 如果第二页没数据，清空
-        if(currentPage2Data.length > 0) {
-            renderList(document.getElementById('list2'), currentPage2Data, currentPage1Data.length, style);
-        } else {
-            document.getElementById('list2').innerHTML = '';
-        }
+        renderList(document.getElementById('list1'), selected.slice(0, perPage), 0);
+        renderList(document.getElementById('list2'), selected.slice(perPage), perPage);
         syncTitle();
     }
 
-    function renderList(container, data, startIndexOffset, style) {
+    function renderList(container, data, offset) {
+        const style = document.getElementById('indexStyleSelect').value;
         container.innerHTML = '';
-        data.forEach((item, index) => {
-            const globalIndex = startIndexOffset + index;
+        data.forEach((item, idx) => {
+            const i = offset + idx;
+            let idxHtml = `${i+1}.`;
+            if(style==='circle') idxHtml = indexMaps.circle[i]||(i+1);
+            if(style==='solid') idxHtml = indexMaps.solid[i]||(i+1);
+            if(style==='pad') idxHtml = (i+1)<10 ? `0${i+1}` : (i+1);
+            if(style==='badge') idxHtml = `${i+1}`;
+
             const div = document.createElement('div');
-            // 修复胶囊序号Bug：list-item上不加index-style-badge
             div.className = `list-item ${item.isMine ? 'my-brand' : ''}`;
-            div.contentEditable = "true";
-            div.innerHTML = `
-                ${getIndexHTML(globalIndex, style)}
-                <div class="item-info">
-                    <span class="brand-name">${item.name}📍（${item.loc}）</span>
-                    <span class="item-text">${item.desc}</span>
-                </div>
-            `;
+            // 修复：确保内容可编辑，且正文部分有 contenteditable
+            div.innerHTML = `<span class="item-index index-style-${style}">${idxHtml}</span><div class="item-info" contenteditable="true"><span class="brand-name">${item.name}📍(${item.loc})</span><span class="item-text">${item.desc}</span></div>`;
             container.appendChild(div);
         });
     }
-
-    function setAlignment(type) {
-        const root = document.documentElement;
-        if (type === 'left') root.style.setProperty('--title-align', 'left');
-        else if (type === 'center') root.style.setProperty('--title-align', 'center');
-        else if (type === 'right') root.style.setProperty('--title-align', 'right');
-    }
-
-    function setPaperStyle(styleName, btn) {
-        document.querySelectorAll('.style-opt').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const cards = document.querySelectorAll('.xhs-card');
-        const wrappers = document.querySelectorAll('.inner-sheet-wrapper');
-
-        cards.forEach((card, idx) => {
-            card.className = `xhs-card paper-${styleName}`;
-            
-            if(styleName === 'yellow' || styleName === 'rounded') {
-                wrappers[idx].className = 'inner-sheet-wrapper inner-sheet';
-            } else {
-                wrappers[idx].className = 'inner-sheet-wrapper';
-            }
-
-            // 控制特殊图标显示
-            const footer1 = card.querySelector('.paper-yellow-app-footer');
-            const footer2 = card.querySelector('.paper-texture-footer');
-            const footer3 = card.querySelector('.paper-grid-browser-footer');
-            const footer4 = card.querySelector('.paper-gold-footer');
-            const footer5 = card.querySelector('.paper-bottom-line-footer');
-            const headerIcons = card.querySelector('.header-icons');
-            const macBar = card.querySelector('.paper-macos-bar');
-            const macTools = card.querySelector('.mac-grid-tools');
-            
-            if(footer1) footer1.style.display = (styleName === 'yellow-app') ? 'flex' : 'none';
-            if(footer2) footer2.style.display = (styleName === 'texture') ? 'flex' : 'none';
-            if(footer3) footer3.style.display = (styleName === 'grid-browser') ? 'flex' : 'none';
-            if(footer4) footer4.style.display = (styleName === 'gold') ? 'flex' : 'none';
-            if(footer5) footer5.style.display = (styleName === 'bottom-line') ? 'block' : 'none';
-            
-            if(headerIcons) headerIcons.style.display = (styleName === 'rounded') ? 'flex' : 'none';
-            if(macBar) macBar.style.display = (styleName === 'macos') ? 'block' : 'none';
-            if(macTools) macTools.style.display = (styleName === 'mac-grid') ? 'flex' : 'none';
-        });
-
-        // 锁定行高逻辑
-        const gapSlider = document.getElementById('gapSlider');
-        if(['lined', 'date-lined', 'dashed', 'draft-grid', 'yellow-bar', 'mac-grid'].includes(styleName)) {
-            gapSlider.disabled = true;
-            gapSlider.title = "此模式下行距固定以对齐网格";
-            updateCSSVar('--list-gap', '0px');
-            updateCSSVar('--list-size', '16px');
-        } else {
-            gapSlider.disabled = false;
-            gapSlider.title = "";
-            gapSlider.value = 12;
-            updateCSSVar('--list-gap', '12px');
-            updateCSSVar('--list-size', '14px');
-        }
-    }
-
-    function handleBgUpload(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.querySelectorAll('.custom-bg-overlay').forEach(el => {
-                    el.style.backgroundImage = `url(${e.target.result})`;
-                    el.style.opacity = 1;
-                });
-                setPaperStyle('default', document.querySelector('.style-opt'));
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    const themes = [
-        { bg: '#FDFBF7', text1: '#4A403A', text2: '#8C8279', accent: '#D4C4B7', hl: '#E65A5A' },
-        { bg: '#F0F4F8', text1: '#3D4C53', text2: '#788995', accent: '#B8C6D1', hl: '#5D7C8F' },
-        { bg: '#F1F5EB', text1: '#3A4A3A', text2: '#758575', accent: '#B7C4B7', hl: '#6B8E23' },
-        { bg: '#F6F0F8', text1: '#4A3A4A', text2: '#857585', accent: '#CDB7CD', hl: '#9370DB' },
-        { bg: '#FFFFFF', text1: '#111111', text2: '#666666', accent: '#DDDDDD', hl: '#000000' },
-        { bg: '#333333', text1: '#FFFFFF', text2: '#BBBBBB', accent: '#555555', hl: '#FFD700' } 
-    ];
-
-    function setTheme(index) {
-        const t = themes[index];
-        const root = document.documentElement;
-        root.style.setProperty('--bg-color', t.bg);
-        root.style.setProperty('--text-primary', t.text1);
-        root.style.setProperty('--text-secondary', t.text2);
-        root.style.setProperty('--accent-color', t.accent);
-        root.style.setProperty('--highlight', t.hl);
-        document.querySelectorAll('.custom-bg-overlay').forEach(el => el.style.opacity = 0);
-        document.getElementById('bgUpload').value = '';
-        document.querySelectorAll('.btn-theme').forEach((btn, i) => btn.classList.toggle('active', i === index));
-    }
-
-    function updateCSSVar(v, val) { document.documentElement.style.setProperty(v, val); }
-    function updateFont(f) { updateCSSVar('--font-stack', f); }
 
     function syncTitle() {
         const txt = document.getElementById('titleInput').value;
         const br = document.getElementById('breakTitleCheck').checked;
         document.querySelectorAll('.main-title').forEach(el => {
-            if(br && txt.length > 5) {
-                const mid = Math.ceil(txt.length/2);
-                el.innerHTML = txt.slice(0,mid) + '<br>' + txt.slice(mid);
-            } else { el.innerText = txt; }
+            el.innerHTML = (br && txt.length > 5) ? txt.slice(0, Math.ceil(txt.length/2)) + '<br>' + txt.slice(Math.ceil(txt.length/2)) : txt;
         });
     }
 
-    function downloadImages() {
-        ['card1', 'card2'].forEach((id, i) => {
-            html2canvas(document.getElementById(id), { scale:2, useCORS:true, backgroundColor:null }).then(cvs => {
-                const a = document.createElement('a');
-                a.download = `意帜_大码档口_${i+1}.png`;
-                a.href = cvs.toDataURL();
-                a.click();
+    function setPaperStyle(name, btn) {
+        document.querySelectorAll('.visual-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.xhs-card').forEach(c => c.className = `xhs-card paper-${name}`);
+        
+        const wrappers = document.querySelectorAll('.inner-sheet-wrapper');
+        wrappers.forEach(w => w.className = (name === 'rounded') ? 'inner-sheet-wrapper inner-sheet' : 'inner-sheet-wrapper');
+
+        const uiClasses = ['paper-yellow-app-footer','paper-texture-footer','paper-grid-browser-footer','paper-gold-footer','paper-bottom-line-footer','header-icons','mac-grid-tools','paper-macos-bar'];
+        document.querySelectorAll(uiClasses.map(c=>'.'+c).join(',')).forEach(el => el.style.display = 'none');
+
+        if(name === 'yellow-app') document.querySelectorAll('.paper-yellow-app-footer').forEach(e=>e.style.display='flex');
+        if(name === 'texture') document.querySelectorAll('.paper-texture-footer').forEach(e=>e.style.display='flex');
+        if(name === 'grid-browser') document.querySelectorAll('.paper-grid-browser-footer').forEach(e=>e.style.display='flex');
+        if(name === 'gold') document.querySelectorAll('.paper-gold-footer').forEach(e=>e.style.display='flex');
+        if(name === 'bottom-line') document.querySelectorAll('.paper-bottom-line-footer').forEach(e=>e.style.display='block');
+        if(name === 'rounded') document.querySelectorAll('.header-icons').forEach(e=>e.style.display='flex');
+        if(name === 'macos') document.querySelectorAll('.paper-macos-bar').forEach(e=>e.style.display='block');
+        if(name === 'mac-grid') { 
+            document.querySelectorAll('.mac-grid-tools').forEach(e=>e.style.display='flex');
+            document.querySelectorAll('.paper-macos-bar').forEach(e=>e.style.display='block');
+        }
+
+        const isGrid = ['lined','draft-grid','yellow-bar','mac-grid','date-lined','dashed','grid-browser'].includes(name);
+        const slider = document.getElementById('gapSlider');
+        const gapInfo = document.getElementById('gapInfo');
+        
+        slider.disabled = isGrid;
+        gapInfo.style.display = isGrid ? 'block' : 'none';
+        
+        updateCSSVar('--list-gap', isGrid ? '0px' : '12px');
+        updateCSSVar('--list-size', isGrid ? '16px' : '14px');
+        if(!isGrid) slider.value = 12;
+    }
+
+    const themes = [{bg:'#FDFBF7',t1:'#2C2C2C',l:'#d1d1d1'}, {bg:'#F0F4F8',t1:'#3D4C53',l:'#dae1e7'}, {bg:'#F1F5EB',t1:'#3A4A3A',l:'#dbe4d5'}, {bg:'#F6F0F8',t1:'#4A3A4A',l:'#e3dce6'}, {bg:'#FFFFFF',t1:'#111',l:'#eee'}, {bg:'#333',t1:'#fff',l:'#555'}];
+    function setTheme(i) {
+        const t = themes[i];
+        updateCSSVar('--bg-color', t.bg);
+        updateCSSVar('--text-primary', t.t1);
+        updateCSSVar('--line-color', t.l);
+        document.querySelectorAll('.color-dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+    }
+
+    function addSticker(content, color) {
+        document.querySelectorAll('.xhs-card').forEach(card => {
+            const el = document.createElement('div');
+            el.className = 'sticker-item';
+            el.innerHTML = `<div class="sticker-text" style="color:${color};border-color:${color}">${content}</div>`;
+            el.style.left = '50px'; el.style.top = '100px';
+            initDrag(el); card.appendChild(el);
+        });
+    }
+    function addLogo(input) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.querySelectorAll('.xhs-card').forEach(card => {
+                const el = document.createElement('div');
+                el.className = 'sticker-item';
+                el.innerHTML = `<img src="${e.target.result}">`;
+                el.style.left = '50px'; el.style.top = '100px';
+                initDrag(el); card.appendChild(el);
             });
-        });
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+    function initDrag(el) {
+        let isDown = false, offX, offY;
+        el.addEventListener('mousedown', e => { isDown=true; offX=e.clientX-el.offsetLeft; offY=e.clientY-el.offsetTop; });
+        window.addEventListener('mousemove', e => { if(isDown) { el.style.left=(e.clientX-offX)+'px'; el.style.top=(e.clientY-offY)+'px'; }});
+        window.addEventListener('mouseup', () => isDown=false);
+        el.addEventListener('dblclick', () => el.remove());
     }
 
-    window.onload = function() { generateNewData(); };
+    function openDataManager() { document.getElementById('dataManagerModal').style.display='flex'; renderDataMgr(); }
+    function closeDataManager() { document.getElementById('dataManagerModal').style.display='none'; generateNewData(); }
+    function renderDataMgr() {
+        const list = document.getElementById('dataList'); list.innerHTML='';
+        brands.forEach((b, i) => {
+            list.innerHTML += `<div class="data-row"><span>${b.name}</span><button onclick="delData(${i})">🗑️</button></div>`;
+        });
+    }
+    function delData(i) { brands.splice(i,1); localStorage.setItem('xhs_brands', JSON.stringify(brands)); renderDataMgr(); }
+    function resetData() { if(confirm('重置?')) { brands=[...defaultData]; localStorage.setItem('xhs_brands', JSON.stringify(brands)); renderDataMgr(); } }
+    function importData() {
+        const txt = document.getElementById('importText').value;
+        const arr = txt.split('\n').map(l => { const p=l.split(' '); return p.length>1?{name:p[0],loc:p[1],desc:p.slice(2).join(' ')||''}:null }).filter(x=>x);
+        if(arr.length) { brands=arr; localStorage.setItem('xhs_brands', JSON.stringify(brands)); alert('导入成功'); generateNewData(); }
+    }
+    
+    function downloadImages() {
+        ['card1','card2'].forEach(id => html2canvas(document.getElementById(id), {scale:2}).then(c => {
+            const a = document.createElement('a'); a.download='xhs.png'; a.href=c.toDataURL(); a.click();
+        }));
+    }
+    function changeBg(inp) {
+        const r = new FileReader();
+        r.onload = e => document.querySelectorAll('.custom-bg-overlay').forEach(d => { d.style.backgroundImage=`url(${e.target.result})`; d.style.opacity=1; });
+        r.readAsDataURL(inp.files[0]);
+    }
+
+    window.onload = generateNewData;
 </script>
 </body>
 </html>
