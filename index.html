@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L-YIEZHII-小红书V9.0 (内部通用版)</title>
+    <title>意帜-小红书B端排版神器 V9.1 (内部通用版)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
         :root {
-            /* 品牌色 */
             --primary-color: #ff2442;
             --bg-body: #f4f6f8;
             --bg-panel: #ffffff;
             
-            /* 排版变量 */
             --bg-color: #FDFBF7;
             --text-primary: #2C2C2C;
             --text-secondary: #555555;
@@ -37,13 +35,13 @@
             margin: 0; padding: 20px;
             min-height: 100vh;
             display: flex; justify-content: center;
-            overflow-x: hidden; /* 防止横向滚动 */
+            overflow-x: hidden;
         }
 
         /* === 🔐 登录遮罩层 === */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #1a1a1a; /* 深色背景更显高端 */
+            background-color: #111; /* 纯黑背景 */
             z-index: 9999;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
@@ -53,67 +51,89 @@
         
         .login-box {
             text-align: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: rgba(255, 255, 255, 0.08);
+            padding: 50px;
+            border-radius: 24px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .login-logo {
-            width: 120px; height: 120px;
-            object-fit: cover;
+            width: 100px; height: 100px;
             border-radius: 50%;
-            border: 3px solid #ff2442;
+            object-fit: cover;
+            border: 2px solid #ff2442;
             margin-bottom: 20px;
-            box-shadow: 0 0 20px rgba(255, 36, 66, 0.4);
+            background-color: #fff; /* 防止图片透明部分透出黑色 */
+        }
+
+        /* 找不到图片时的提示 */
+        .login-logo:after {
+            content: '请放入 logo.png';
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; background: #333; color: #fff; font-size: 12px;
         }
 
         .login-title {
-            font-size: 24px; font-weight: 900; letter-spacing: 2px;
-            margin-bottom: 30px;
-            color: #fff;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            font-size: 20px; font-weight: 700; letter-spacing: 1px;
+            margin-bottom: 25px; color: #eee;
         }
 
         .login-input {
             padding: 12px 20px;
-            border-radius: 30px;
-            border: 1px solid #555;
-            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: rgba(0,0,0,0.6);
             color: #fff;
             font-size: 16px;
             outline: none;
-            width: 200px;
+            width: 220px;
             text-align: center;
+            letter-spacing: 2px;
             transition: 0.3s;
         }
-        .login-input:focus { border-color: #ff2442; box-shadow: 0 0 10px rgba(255, 36, 66, 0.3); }
+        .login-input:focus { border-color: #ff2442; box-shadow: 0 0 15px rgba(255, 36, 66, 0.2); }
 
         .login-btn {
             margin-top: 20px;
-            padding: 10px 40px;
-            border-radius: 30px;
-            border: none;
-            background: linear-gradient(45deg, #ff2442, #ff5f57);
+            padding: 10px 0; width: 100%;
+            border-radius: 8px; border: none;
+            background: #ff2442;
             color: white; font-weight: bold; cursor: pointer;
             transition: 0.3s;
         }
-        .login-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(255, 36, 66, 0.4); }
+        .login-btn:hover { background: #e01b36; }
 
-        /* === 🛡️ 背景水印 (登录后显示) === */
-        .bg-watermark {
-            position: fixed; bottom: 20px; right: 20px;
-            opacity: 0.05; pointer-events: none; z-index: 0;
-            width: 300px;
+        /* === 🛡️ 右上角水印 (Brand Watermark) === */
+        .brand-watermark {
+            position: fixed; 
+            top: 20px; right: 30px; /* 右上角定位 */
+            display: flex; flex-direction: column; align-items: center;
+            opacity: 0; /* 默认隐藏，登录后显示 */
+            pointer-events: none; z-index: 0;
+            transition: opacity 1s ease 0.5s;
+        }
+        .app-container.unlocked ~ .brand-watermark { opacity: 0.15; } /* 解锁后显示，透明度15% */
+
+        .wm-logo {
+            width: 80px; height: 80px;
+            border-radius: 50%; object-fit: cover;
+            margin-bottom: 5px;
+            filter: grayscale(100%); /* 水印黑白化更显专业 */
+        }
+        .wm-text {
+            font-family: 'Roboto Mono', sans-serif;
+            font-weight: 900; font-size: 14px; letter-spacing: 1px;
+            color: #333; text-transform: uppercase;
         }
 
         /* === 主容器 === */
-        .app-container { display: flex; width: 100%; max-width: 1400px; gap: 30px; align-items: flex-start; filter: blur(5px); transition: 0.5s; pointer-events: none; }
+        .app-container { display: flex; width: 100%; max-width: 1400px; gap: 30px; align-items: flex-start; filter: blur(10px); transition: 0.5s; pointer-events: none; }
         .app-container.unlocked { filter: blur(0); pointer-events: auto; }
 
-        /* 左侧侧边栏 */
+        /* 侧边栏 */
         .sidebar { width: 380px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 5px; z-index: 100; }
         .sidebar::-webkit-scrollbar { width: 0; }
 
@@ -167,42 +187,40 @@
             transition: all 0.3s ease;
         }
 
-        /* 列表项 (修复点击编辑) */
+        /* 列表项 (修复点击编辑: z-index提升) */
         .list-item {
             display: flex !important; flex-direction: row !important; align-items: flex-start;
             width: 100%; margin-bottom: var(--list-gap); font-size: var(--list-size); line-height: 1.5;
             position: relative;
-            z-index: 5; /* 提升层级，确保在背景之上 */
-            cursor: text; /* 提示可编辑 */
+            z-index: 10; /* 确保文字层级高于背景 */
+            cursor: text;
         }
-        .list-item:hover { background: rgba(0,0,0,0.02); border-radius: 4px; } /* 编辑时高亮 */
+        .list-item:hover { background: rgba(0,0,0,0.03); border-radius: 4px; } /* 编辑提示 */
 
         .item-index {
             flex-shrink: 0; margin-right: 8px; font-weight: 800; color: var(--accent-color);
-            min-width: 20px; text-align: center; pointer-events: none; /* 序号不可编辑，防误触 */
+            min-width: 20px; text-align: center; pointer-events: none;
         }
         .item-info { flex: 1; min-width: 0; word-wrap: break-word; text-align: left !important; outline: none; }
         .brand-name { font-weight: 700; color: var(--text-primary); margin-right: 5px; }
         .item-text { color: var(--text-secondary); }
 
         .index-style-badge {
-            background: var(--accent-color); 
-            color: #fff !important; 
-            border-radius: 4px; padding: 0 4px;
-            font-size: 0.9em; height: auto;
-            display: inline-block; line-height: 1.4;
+            background: var(--accent-color); color: #fff !important;
+            border-radius: 4px; padding: 0 4px; font-size: 0.9em; height: auto; display: inline-block; line-height: 1.4;
         }
 
         .card-header {
             margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--accent-color);
-            text-align: var(--title-align); flex-shrink: 0; z-index: 5;
+            text-align: var(--title-align); flex-shrink: 0; z-index: 10;
         }
         .main-title {
             display: inline-block; font-weight: 900; font-size: var(--title-size);
-            line-height: 1.3; color: var(--text-primary); margin: 0; outline: none;
+            line-height: 1.3; color: var(--text-primary); margin: 0; outline: none; cursor: text;
         }
 
-        .sticker-item { position: absolute; cursor: move; z-index: 100; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        /* 贴纸 */
+        .sticker-item { position: absolute; cursor: move; z-index: 50; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
         .sticker-item:hover { transform: scale(1.05); border: 1px dashed #ccc; }
         .sticker-text { padding: 5px 15px; border: 3px solid currentColor; border-radius: 8px; font-weight: 900; font-size: 24px; background: rgba(255,255,255,0.9); pointer-events: none; }
         .sticker-item img { max-width: 100px; pointer-events: none; }
@@ -274,7 +292,9 @@
         .paper-macos-bar { position: absolute; top: 8px; left: 80px; right: 50px; height: 24px; background: var(--bg-color); border: 1px solid var(--line-color); border-radius: 4px; z-index: 2; }
         .paper-date-lined { background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 40px); background-size: 100% 40px; padding-top: 60px !important; }
         .paper-date-lined::before { content: 'Date ___________'; position: absolute; top: 20px; left: 35px; font-family: cursive; font-size: 20px; color: var(--text-primary); }
+        .paper-date-lined .list-item { height: 40px !important; align-items: center !important; margin: 0 !important; }
         .paper-dashed { background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='39' x2='100%25' y2='39' stroke='%23cccccc' stroke-width='1' stroke-dasharray='5,5'/%3E%3C/svg%3E"); padding-top: 40px !important; }
+        .paper-dashed .list-item { height: 40px !important; align-items: center !important; margin: 0 !important; }
         .paper-spiral { padding-left: 60px !important; padding-top: 35px !important; background-image: none !important; }
         .paper-spiral::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 20px; background-image: radial-gradient(var(--accent-color) 20%, transparent 25%); background-size: 30px 30px; border-right: 4px double #eee; }
         .paper-minimal { padding-top: 60px !important; background-image: none !important; }
@@ -295,7 +315,7 @@
 
     <div id="login-overlay">
         <div class="login-box">
-            <img src="logo.jpg" class="login-logo" onerror="this.style.display='none'">
+            <img src="logo.png" class="login-logo" onerror="this.style.display='none'">
             <div class="login-title">YIEZHII内部通用版</div>
             <input type="password" class="login-input" id="tokenInput" placeholder="输入密钥解锁">
             <br>
@@ -303,7 +323,10 @@
         </div>
     </div>
 
-    <img src="logo.jpg" class="bg-watermark" onerror="this.style.display='none'">
+    <div class="brand-watermark">
+        <img src="logo.png" class="wm-logo" onerror="this.style.display='none'">
+        <div class="wm-text">YIEZHII内部通用版</div>
+    </div>
 
     <div class="app-container" id="app">
         <aside class="sidebar">
@@ -340,6 +363,7 @@
                             <div class="visual-opt active" onclick="setPaperStyle('default', this)"><div class="visual-preview" style="background:#FDFBF7"></div><div class="visual-label">极简</div></div>
                             <div class="visual-opt" onclick="setPaperStyle('lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">横线</div></div>
                             <div class="visual-opt" onclick="setPaperStyle('phone', this)"><div class="visual-preview" style="background:#f7f7f7; border-top:5px solid #eee;"></div><div class="visual-label">备忘录</div></div>
+                            <div class="visual-opt" onclick="setPaperStyle('yellow', this)"><div class="visual-preview" style="background:#FFD954"></div><div class="visual-label">便签</div></div>
                             <div class="visual-opt" onclick="setPaperStyle('grid-browser', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">网格</div></div>
                             <div class="visual-opt" onclick="setPaperStyle('gold', this)"><div class="visual-preview vp-gold"></div><div class="visual-label">金色</div></div>
                             <div class="visual-opt" onclick="setPaperStyle('macos', this)"><div class="visual-preview vp-mac"></div><div class="visual-label">Mac</div></div>
@@ -479,7 +503,7 @@
     </div>
 
 <script>
-    // 登录校验逻辑
+    // 登录校验
     function checkToken() {
         const token = document.getElementById('tokenInput').value.trim().toUpperCase();
         if(token === 'ALINDM') {
@@ -487,16 +511,12 @@
             document.getElementById('app').classList.add('unlocked');
             setTimeout(() => { document.getElementById('login-overlay').style.display='none'; }, 500);
         } else {
-            alert('密钥错误，请联系管理员');
+            alert('密钥错误');
         }
     }
+    document.getElementById('tokenInput').addEventListener('keypress', function(e) { if(e.key === 'Enter') checkToken(); });
 
-    // 回车登录
-    document.getElementById('tokenInput').addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') checkToken();
-    });
-
-    // ... (以下为核心功能 JS，保持不变) ...
+    // === 核心数据 ===
     const myBrand = { name: "意帜", loc: "9意法5182", descs: ["拒绝市场通货，原创设计不撞款力推！", "独家开版定染，市面稀缺好货强推！", "风格差异化，轻松留住老客户必逛！", "品质好强推！原创设计不撞款力推！", "实体店都在拿，错过拍大腿强推！", "闭眼拿不踩雷，老客回头率高必逛！", "拿回去没对手，整条街独一份力推！", "告别土味大码，原创设计不撞款强推！", "独家原创设计，整条街都不撞款必逛！", "这种调性大码，别家真没有力推！", "必拿档口！品质版型都很绝！强推！"] };
     const defaultData = [{name: "h.h", loc: "9意法1281", desc: "韩系小清新风格，很减龄"}, {name: "慧芝", loc: "9意法5123", desc: "甜酷少女风，胖mm凸显曲线美"}, {name: "sto", loc: "9意法2169", desc: "日常通勤风，简约不挑人"}, {name: "艾贝梵", loc: "9意法5136", desc: "新中式风格，温婉大气"}, {name: "3apple", loc: "9意法5103", desc: "基础日常款多，利用率高"}, {name: "tmi", loc: "9意法5157", desc: "韩系甜美，温柔清新田园风"}, {name: "FAFA", loc: "9意法5160", desc: "气质韩系，甜美与休闲潮酷兼备"}, {name: "油菜", loc: "9意法5179", desc: "韩系甜美田园风，主打连衣裙"}, {name: "PPGL", loc: "9意法5191", desc: "专业大码女装裤"}, {name: "WOOWD", loc: "9意法5155", desc: "韩系大码原创风，甜美复古"}, {name: "青孜", loc: "9意法5150", desc: "实穿与时尚兼备，全品类简约"}, {name: "fbyk", loc: "9意法5151", desc: "主打防晒服和套装"}, {name: "six", loc: "9意法5128", desc: "棉麻亚麻小衫，休闲显瘦"}, {name: "百家欢", loc: "9意法5126", desc: "中高端大码，包容性强"}, {name: "乃粒", loc: "9意法5176", desc: "通勤风，针织类档口"}, {name: "沫森图", loc: "9意法2169", desc: "简约韩系通勤，穿搭风"}, {name: "怪怪树", loc: "9意法3215", desc: "欧韩大版休闲风，孕妈可穿"}, {name: "YOLI", loc: "9意法4279", desc: "防晒衫是必拿款"}, {name: "OUKA", loc: "9意法4255", desc: "主打T恤及防晒衬衫"}, {name: "董与陈", loc: "意法4080", desc: "大码连衣裙专营"}, {name: "牛牛", loc: "清江2012", desc: "日系大码，品类多"}, {name: "译外", loc: "清江1067", desc: "棉麻民族风、国风"}, {name: "熊姑娘", loc: "清江", desc: "甜美森系，可可爱爱"}, {name: "迷妮", loc: "清江2楼", desc: "复古休闲棉麻，舒适"}, {name: "疯子", loc: "清江1008", desc: "文艺大妈中性调"}, {name: "布壹贰", loc: "清江3039", desc: "复古做旧棉麻，有质感"}, {name: "璞田夕", loc: "清江3001", desc: "民族风，苎麻棉麻"}, {name: "达令", loc: "环北2楼", desc: "日韩休闲风，好穿"}, {name: "石九", loc: "东大楼2楼", desc: "性冷淡日系原创休闲"}, {name: "zaozao", loc: "中星a6", desc: "原创日系，有格调松弛风"}, {name: "小森林", loc: "常青2楼", desc: "甜美少女风格"}, {name: "小姐妹", loc: "常青2楼", desc: "文艺小清新"}, {name: "小日子", loc: "中星2036", desc: "韩系休闲，日常"}, {name: "韩国馆", loc: "环北2185", desc: "亮色复古风，善用大撞色"}, {name: "本源", loc: "新杭派160", desc: "日系休闲风，文艺复古"}, {name: "阿北", loc: "中星b150", desc: "复古森系，氛围感"}, {name: "Miao", loc: "新杭派B333", desc: "老钱风极简风大码"}, {name: "wive", loc: "9意法5098", desc: "大码女孩的极简老钱风"}, {name: "豌豆家", loc: "9中星036", desc: "韩休闲松弛慵懒风"}, {name: "n.ge", loc: "老意法2275", desc: "日系棉麻森系大码"}, {name: "SEVENTEEN", loc: "9意法2169", desc: "极简轻奢，芝麻类"}, {name: "草堂", loc: "9意法5196", desc: "森系棉麻复古类大码"}, {name: "RRZBB", loc: "9新意法345", desc: "日系复古山系舒适风"}, {name: "buer", loc: "9常青6007", desc: "极简原创设计，潮流大码"}];
     let brands = JSON.parse(localStorage.getItem('xhs_brands')) || [...defaultData];
@@ -540,7 +560,6 @@
 
             const div = document.createElement('div');
             div.className = `list-item ${item.isMine ? 'my-brand' : ''}`;
-            // 修复：确保内容可编辑，且正文部分有 contenteditable
             div.innerHTML = `<span class="item-index index-style-${style}">${idxHtml}</span><div class="item-info" contenteditable="true"><span class="brand-name">${item.name}📍(${item.loc})</span><span class="item-text">${item.desc}</span></div>`;
             container.appendChild(div);
         });
@@ -560,7 +579,7 @@
         document.querySelectorAll('.xhs-card').forEach(c => c.className = `xhs-card paper-${name}`);
         
         const wrappers = document.querySelectorAll('.inner-sheet-wrapper');
-        wrappers.forEach(w => w.className = (name === 'rounded') ? 'inner-sheet-wrapper inner-sheet' : 'inner-sheet-wrapper');
+        wrappers.forEach(w => w.className = (name === 'rounded' || name === 'yellow') ? 'inner-sheet-wrapper inner-sheet' : 'inner-sheet-wrapper');
 
         const uiClasses = ['paper-yellow-app-footer','paper-texture-footer','paper-grid-browser-footer','paper-gold-footer','paper-bottom-line-footer','header-icons','mac-grid-tools','paper-macos-bar'];
         document.querySelectorAll(uiClasses.map(c=>'.'+c).join(',')).forEach(el => el.style.display = 'none');
