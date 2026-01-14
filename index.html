@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>意帜-小红书B端排版神器 V9.1 (内部通用版)</title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YIEZHII-小红书内部通版AI生成神器 V9.3</title>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
@@ -25,18 +26,36 @@
             --title-size: 32px;
             --list-size: 14px;
             --list-gap: 12px;
-            --title-align: left; 
+            
+            --text-line-height: var(--text-line-height);
+            --row-height: 40px;
+--title-align: left; 
             --card-padding: 35px;
         }
 
         body {
             font-family: var(--font-stack);
             background-color: var(--bg-body);
-            margin: 0; padding: 20px;
+            margin: 0; padding: 0;
             min-height: 100vh;
             display: flex; justify-content: center;
-            overflow-x: hidden;
+            overflow: hidden;
         }
+
+        html, body { height: 100%; overflow: hidden; }
+        /* 由容器提供留白，避免 body 产生滚动 */
+        .app-container{ height: 100vh; padding: 20px; box-sizing: border-box; overflow: hidden; }
+        .sidebar{ height: 100%; overflow-y: auto; }
+        .main-preview{ height: 100%; overflow-y: auto; }
+        /* Tab 内容不裁切：让 sidebar 自己滚动 */
+        .control-panel{ overflow: visible; }
+        /* 知识卡里禁止系统序号/项目符号 */
+        .kt-card ol, .kt-card ul{ list-style: none !important; padding-left: 0 !important; margin: 0 !important; }
+        .kt-card li::marker{ content: "" !important; }
+        /* 知识模块面板固定在侧边栏底部，切换 Tab 也随时可见 */
+        .knowledge-panel{ position: sticky; bottom: 0; z-index: 30; }
+        .knowledge-panel .data-list{ max-height: 220px; }
+
 
         /* === 🔐 登录遮罩层 === */
         #login-overlay {
@@ -130,23 +149,59 @@
         }
 
         /* === 主容器 === */
-        .app-container { display: flex; width: 100%; max-width: 1400px; gap: 30px; align-items: flex-start; filter: blur(10px); transition: 0.5s; pointer-events: none; }
+        .app-container{
+            display:flex;
+            width:100%;
+            max-width:1400px;
+            margin:0 auto;
+            gap:24px;
+            align-items:flex-start;
+            padding:20px;
+            height:100vh;
+            overflow:hidden;
+        }
         .app-container.unlocked { filter: blur(0); pointer-events: auto; }
 
         /* 侧边栏 */
-        .sidebar { width: 380px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 5px; z-index: 100; }
-        .sidebar::-webkit-scrollbar { width: 0; }
+        .sidebar{
+            width:400px;
+            flex-shrink:0;
+            position:sticky;
+            top:20px;
+            height:calc(100vh - 40px);
+            overflow-y:auto;
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+            padding-right:6px;
+            z-index:100;
+        }
+        .sidebar::-webkit-scrollbar { width: 8px; }
 
         /* 预览区 */
-        .main-preview { flex: 1; display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; padding-bottom: 50px; position: relative; z-index: 1; }
+        .main-preview{
+            flex:1;
+            height:100%;
+            overflow-y:auto;
+            display:flex;
+            flex-wrap:wrap;
+            gap:30px;
+            justify-content:center;
+            padding-bottom:50px;
+            position:relative;
+        }
 
         /* 面板样式 */
         .control-panel { background: var(--bg-panel); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
         .tabs { display: flex; border-bottom: 1px solid #eee; background: #fff; position: sticky; top:0; z-index: 10; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: 600; color: #666; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: 600; color: #666; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; }
         .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-        .panel-content { padding: 20px; display: none; }
+        .panel-content { padding: 14px; display: none; }
         .panel-content.active { display: block; }
+        .panel-content{
+            /* 让侧边栏滚动承载全部内容，避免页面整体滚动 */
+        }
+        .panel-content::-webkit-scrollbar{ width: 8px; }
 
         /* 控件 */
         .control-group { margin-bottom: 20px; border-bottom: 1px dashed #eee; padding-bottom: 15px; }
@@ -190,7 +245,7 @@
         /* 列表项 (修复点击编辑: z-index提升) */
         .list-item {
             display: flex !important; flex-direction: row !important; align-items: flex-start;
-            width: 100%; margin-bottom: var(--list-gap); font-size: var(--list-size); line-height: 1.5;
+            width: 100%; margin-bottom: var(--list-gap); font-size: var(--list-size); line-height: var(--text-line-height);
             position: relative;
             z-index: 10; /* 确保文字层级高于背景 */
             cursor: text;
@@ -226,7 +281,7 @@
         .sticker-item img { max-width: 100px; pointer-events: none; }
 
         /* === 风格 CSS === */
-        .paper-lined .list-item, .paper-draft-grid .list-item, .paper-yellow-bar .list-item, .paper-mac-grid .list-item, .paper-date-lined .list-item, .paper-dashed .list-item, .paper-grid-browser .list-item { height: 40px !important; line-height: 40px !important; margin-bottom: 0 !important; align-items: center !important; }
+        .paper-lined .list-item, .paper-draft-grid .list-item, .paper-yellow-bar .list-item, .paper-mac-grid .list-item, .paper-date-lined .list-item, .paper-dashed .list-item, .paper-grid-browser .list-item { height: var(--row-height) !important; line-height: var(--row-height) !important; margin-bottom: 0 !important; align-items: center !important; }
         .paper-lined .item-info, .paper-draft-grid .item-info, .paper-grid-browser .item-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .paper-default { background-image: none !important; border: none; }
@@ -292,9 +347,9 @@
         .paper-macos-bar { position: absolute; top: 8px; left: 80px; right: 50px; height: 24px; background: var(--bg-color); border: 1px solid var(--line-color); border-radius: 4px; z-index: 2; }
         .paper-date-lined { background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 40px); background-size: 100% 40px; padding-top: 60px !important; }
         .paper-date-lined::before { content: 'Date ___________'; position: absolute; top: 20px; left: 35px; font-family: cursive; font-size: 20px; color: var(--text-primary); }
-        .paper-date-lined .list-item { height: 40px !important; align-items: center !important; margin: 0 !important; }
+        .paper-date-lined .list-item { height: var(--row-height) !important; line-height: var(--row-height) !important; align-items: center !important; margin: 0 !important; }
         .paper-dashed { background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='39' x2='100%25' y2='39' stroke='%23cccccc' stroke-width='1' stroke-dasharray='5,5'/%3E%3C/svg%3E"); padding-top: 40px !important; }
-        .paper-dashed .list-item { height: 40px !important; align-items: center !important; margin: 0 !important; }
+        .paper-dashed .list-item { height: var(--row-height) !important; line-height: var(--row-height) !important; align-items: center !important; margin: 0 !important; }
         .paper-spiral { padding-left: 60px !important; padding-top: 35px !important; background-image: none !important; }
         .paper-spiral::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 20px; background-image: radial-gradient(var(--accent-color) 20%, transparent 25%); background-size: 30px 30px; border-right: 4px double #eee; }
         .paper-minimal { padding-top: 60px !important; background-image: none !important; }
@@ -309,199 +364,303 @@
         .data-list { flex: 1; overflow-y: auto; border: 1px solid #eee; padding: 10px; }
         .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f9f9f9; padding: 5px 0; }
 
-    </style>
+    
+
+        /* 知识卡内容块 */
+        .kt-page-title { font-weight: 900; font-size: calc(34px * var(--kScale, 1)); text-align: center; margin-top: 40px; line-height: 1.2; }
+        .kt-subtitle { font-size: calc(18px * var(--kScale, 1)); font-weight: 700; margin: 18px 0 10px; }
+        .kt-content { flex: 1; overflow: hidden; min-height: 0; }
+        .kt-steps { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+        .kt-step { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; padding: 14px 14px 12px; }
+        .kt-step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .kt-step-idx { min-width: 34px; height: 34px; border-radius: 12px; background: rgba(255,36,66,0.10); color: #333; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+        .kt-step-title { font-weight: 900; font-size: calc((var(--list-size) * 1.15) * var(--kScale, 1)); }
+        .kt-step-body { font-size: calc(var(--list-size) * var(--kScale, 1)); line-height: var(--text-line-height); color: var(--text-secondary); white-space: pre-wrap; }
+        .kt-bullets { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+        .kt-bullet { display: flex; gap: 8px; align-items: flex-start; }
+        .kt-bullet-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(0,0,0,0.25); margin-top: 8px; flex-shrink: 0; }
+        .kt-footer { margin-top: 10px; font-size: calc(12px * var(--kScale, 1)); color: #999; text-align: center; }
+        .knowledge-card { --kScale: 1; }
+        .knowledge-card .main-title{ font-size: calc(var(--title-size) * var(--kScale, 1)); }
+
+
+#classicPreview,#knowledgePreview{display:flex;flex-wrap:wrap;gap:40px;justify-content:center;width:100%;}
+.main-preview{
+            flex:1;
+            height:100%;
+            overflow-y:auto;
+            display:flex;
+            flex-wrap:wrap;
+            gap:30px;
+            justify-content:center;
+            padding-bottom:50px;
+            position:relative;
+        }
+
+/* ===== V9.8 hotfix: sidebar scroll + preview two-column + hide list markers ===== */
+html, body { height: 100% !important; overflow: hidden !important; }
+.app-container{ display:flex !important; height:100vh !important; overflow:hidden !important; }
+.sidebar{ width:400px !important; height:100vh !important; overflow-y:auto !important; overscroll-behavior:contain; }
+.main-preview{ flex:1 !important; height:100vh !important; overflow-y:auto !important; overscroll-behavior:contain; }
+#classicPreview, #knowledgePreview{ display:flex; flex-wrap:wrap; gap:40px; justify-content:center; }
+#knowledgePreview{ padding-bottom: 80px; } /* avoid sticky panel overlap */
+
+/* hide browser automatic list markers inside knowledge cards */
+#knowledgePreview ul, #knowledgePreview ol{ list-style:none !important; padding-left:0 !important; margin-left:0 !important; }
+#knowledgePreview ::marker{ content:'' !important; }
+
+/* ensure tabs content never blocks scroll */
+.control-panel{ overflow: visible !important; }
+
+
+/* ===== V9.8.1 fix: force 2-column preview with CSS grid (classic + knowledge) ===== */
+#classicPreview, #knowledgePreview{
+  display: grid;
+  grid-template-columns: repeat(2, 450px);
+  gap: 40px;
+  justify-content: center;
+  width: 100%;
+}
+@media (max-width: 980px){
+  #classicPreview, #knowledgePreview{ grid-template-columns: 450px; }
+}
+
+
+        /* ===== Fix: hide step number blocks & page footer, and hide titles on continued pages ===== */
+        .kt-step-num{ display:none !important; }
+        .kt-footer{ display:none !important; }
+        .knowledge-card.knowledge-card.is-cont .main-title{ font-size: calc(var(--title-size) * 0.78); margin-bottom: 8px; }
+.knowledge-card.is-cont .divider{ margin: 10px 0 12px !important; }
+
+/* 标题区紧凑：无副标题/续页 */
+.knowledge-card.no-subtitle .kt-subtitle{ display:none !important; margin:0 !important; padding:0 !important; height:0 !important; }
+.knowledge-card.no-subtitle .divider{ margin: 10px 0 12px !important; }
+.knowledge-card .kt-subtitle{ margin: 10px 0 8px !important; }
+
+
+/* fix6: 续页/无副标题时标题区不留大空白（适配所有 paper-* 风格） */
+.xhs-card.knowledge-card.no-subtitle .divider,
+.xhs-card.knowledge-card.is-cont .divider{
+  margin: 10px 0 12px !important;
+}
+.xhs-card.knowledge-card.no-subtitle .kt-subtitle{
+  display:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  height:0 !important;
+}
+
+</style>
 </head>
 <body>
+<div id="login-overlay">
+<div class="login-box">
+<img class="login-logo" onerror="this.style.display='none'" src="logo.png"/>
+<div class="login-title">YIEZHII内部通用版</div>
+<input class="login-input" id="tokenInput" placeholder="输入密钥解锁" type="password"/>
+<br/>
+<button class="login-btn" onclick="checkToken()">进入系统</button>
+</div>
+</div>
+<div class="brand-watermark">
+<img class="wm-logo" onerror="this.style.display='none'" src="logo.png"/>
+<div class="wm-text">YIEZHII内部通用版</div>
+</div>
+<div class="app-container" id="app">
+<aside class="sidebar">
+<div class="control-panel" id="modePanel" style="padding:12px;">
+<div style="display:flex; gap:10px;">
+<button class="btn btn-secondary" id="modeClassicBtn" onclick="setAppMode('classic')" style="flex:1">🎲 原始生成</button>
+<button class="btn btn-secondary" id="modeKnowledgeBtn" onclick="setAppMode('knowledge')" style="flex:1">🧠 知识模版生成</button>
+</div>
+</div>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <img src="logo.png" class="login-logo" onerror="this.style.display='none'">
-            <div class="login-title">YIEZHII内部通用版</div>
-            <input type="password" class="login-input" id="tokenInput" placeholder="输入密钥解锁">
-            <br>
-            <button class="login-btn" onclick="checkToken()">进入系统</button>
-        </div>
-    </div>
+<div class="control-panel">
+<div class="tabs">
+<button class="tab-btn active" onclick="switchTab('content')">📝 内容</button>
+<button class="tab-btn" onclick="switchTab('style')">🎨 风格</button>
+<button class="tab-btn" onclick="switchTab('details')">🛠️ 微调</button>
+</div>
+<div class="panel-content active" id="tab-content">
+<div class="control-group">
+<div class="group-title">标题内容</div>
+<input id="titleInput" oninput="syncTitle()" style="margin-bottom:5px;" type="text" value="四季青热门大码档口分享"/>
+<label style="font-size:12px;"><input checked="" id="breakTitleCheck" onchange="syncTitle()" type="checkbox"/> 自动换行</label>
+</div>
+<div class="control-group">
+<div class="group-title">数据管理</div>
+<div style="display:flex; gap:10px; margin-bottom:10px;">
+<button class="btn btn-secondary" onclick="openDataManager()" style="flex:1">📂 管理数据</button>
+<button class="btn btn-secondary" onclick="document.getElementById('impArea').style.display='block'" style="flex:1">📋 导入</button>
+</div>
+<div id="impArea" style="display:none;">
+<textarea id="importText" placeholder="粘贴内容..." style="height:60px;"></textarea>
+<button class="btn btn-primary" onclick="importData()" style="margin-top:5px; padding:5px;">确认导入</button>
+</div>
+</div>
+</div>
+<div class="panel-content" id="tab-style">
+<div class="control-group">
+<div class="group-title">点击选择风格</div>
+<div class="visual-selector">
+<div class="visual-opt active" onclick="setPaperStyle('default', this)"><div class="visual-preview" style="background:#FDFBF7"></div><div class="visual-label">极简</div></div>
+<div class="visual-opt" onclick="setPaperStyle('lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">横线</div></div>
+<div class="visual-opt" onclick="setPaperStyle('phone', this)"><div class="visual-preview" style="background:#f7f7f7; border-top:5px solid #eee;"></div><div class="visual-label">备忘录</div></div>
+<div class="visual-opt" onclick="setPaperStyle('yellow', this)"><div class="visual-preview" style="background:#FFD954"></div><div class="visual-label">便签</div></div>
+<div class="visual-opt" onclick="setPaperStyle('grid-browser', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">网格</div></div>
+<div class="visual-opt" onclick="setPaperStyle('gold', this)"><div class="visual-preview vp-gold"></div><div class="visual-label">金色</div></div>
+<div class="visual-opt" onclick="setPaperStyle('macos', this)"><div class="visual-preview vp-mac"></div><div class="visual-label">Mac</div></div>
+<div class="visual-opt" onclick="setPaperStyle('yellow-app', this)"><div class="visual-preview" style="background:#FDFCF6; border-top:3px solid orange;"></div><div class="visual-label">APP</div></div>
+<div class="visual-opt" onclick="setPaperStyle('rounded', this)"><div class="visual-preview" style="background:#ccc; padding:3px;"><div style="background:#fff; height:100%"></div></div><div class="visual-label">圆角</div></div>
+<div class="visual-opt" onclick="setPaperStyle('mac-grid', this)"><div class="visual-preview" style="background:#fff; border-top:8px solid #eee;"></div><div class="visual-label">Mac网</div></div>
+<div class="visual-opt" onclick="setPaperStyle('texture', this)"><div class="visual-preview" style="background:#f0f0f0;"></div><div class="visual-label">纹理</div></div>
+<div class="visual-opt" onclick="setPaperStyle('draft-grid', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">工程</div></div>
+<div class="visual-opt" onclick="setPaperStyle('yellow-bar', this)"><div class="visual-preview" style="background:#fff; border-top:10px solid #F8D868"></div><div class="visual-label">黄栏</div></div>
+<div class="visual-opt" onclick="setPaperStyle('yellow-lite', this)"><div class="visual-preview" style="background:#fff; border-left:3px solid #E6B800"></div><div class="visual-label">极简黄</div></div>
+<div class="visual-opt" onclick="setPaperStyle('bottom-line', this)"><div class="visual-preview" style="background:#fff; border-bottom:3px solid #E0C090"></div><div class="visual-label">底线</div></div>
+<div class="visual-opt" onclick="setPaperStyle('date-lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">日期</div></div>
+<div class="visual-opt" onclick="setPaperStyle('dashed', this)"><div class="visual-preview" style="border-bottom:1px dashed #ccc; background:#f9f9f9"></div><div class="visual-label">虚线</div></div>
+<div class="visual-opt" onclick="setPaperStyle('spiral', this)"><div class="visual-preview" style="background:#fcf9f2; border-left:5px double #ccc;"></div><div class="visual-label">螺旋</div></div>
+<div class="visual-opt" onclick="setPaperStyle('minimal', this)"><div class="visual-preview" style="background:#fff;"></div><div class="visual-label">极简2</div></div>
+</div>
+</div>
+<div class="control-group">
+<div class="group-title">主题配色</div>
+<div class="color-dots">
+<div class="color-dot active" onclick="setTheme(0)" style="background:#FDFBF7"></div>
+<div class="color-dot" onclick="setTheme(1)" style="background:#F0F4F8"></div>
+<div class="color-dot" onclick="setTheme(2)" style="background:#F1F5EB"></div>
+<div class="color-dot" onclick="setTheme(3)" style="background:#F6F0F8"></div>
+<div class="color-dot" onclick="setTheme(4)" style="background:#FFFFFF; border:1px solid #ddd;"></div>
+<div class="color-dot" onclick="setTheme(5)" style="background:#333"></div>
+</div>
+</div>
+</div>
+<div class="panel-content" id="tab-details">
+<div class="control-group">
+<div class="group-title">排版对齐</div>
+<div style="display:flex; gap:5px; margin-bottom:10px;">
+<button class="btn btn-secondary" onclick="updateCSSVar('--title-align', 'left')" style="flex:1">⬅️ 左</button>
+<button class="btn btn-secondary" onclick="updateCSSVar('--title-align', 'center')" style="flex:1">⬇️ 中</button>
+<button class="btn btn-secondary" onclick="updateCSSVar('--title-align', 'right')" style="flex:1">➡️ 右</button>
+</div>
+<div class="input-row">
+<span style="font-size:12px;">序号:</span>
+<select id="indexStyleSelect" onchange="renderCurrentData()" style="flex:1">
+<option value="circle">空心圆 (①)</option>
+<option value="solid">实心黑 (❶)</option>
+<option value="pad">补零 (01)</option>
+<option value="badge">胶囊 (■)</option>
+<option value="dot">简约 (1.)</option>
+</select>
+</div>
+</div>
+<div class="control-group">
+<div class="group-title">尺寸滑块</div>
+<div style="display:flex; flex-direction:column; gap:10px;">
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<span style="font-size:12px;">标题字号</span>
+<input max="50" min="20" oninput="updateCSSVar('--title-size', this.value + 'px')" style="width:60%" type="range" value="32"/>
+</div>
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<span style="font-size:12px;">正文字号</span>
+<input max="18" min="12" oninput="updateCSSVar('--list-size', this.value + 'px')" style="width:60%" type="range" value="14"/>
+</div>
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<span style="font-size:12px;">行间距</span>
+<input id="gapSlider" max="40" min="5" oninput="updateCSSVar('--list-gap', this.value + 'px')" style="width:60%" type="range" value="12"/>
+</div>
+<div id="gapInfo" style="display:none; text-align:right; font-size:10px; color:#ff2442;">(网格/横线类：控制行高；其他风格：控制段落行距)</div>
+</div>
+</div>
+<div class="control-group">
+<div class="group-title">装饰贴纸</div>
+<div style="display:flex; gap:5px; flex-wrap:wrap;">
+<button class="btn btn-secondary" onclick="document.getElementById('logoUpload').click()">➕ Logo</button>
+<input hidden="" id="logoUpload" onchange="addLogo(this)" type="file"/>
+<button class="btn btn-secondary" onclick="addSticker('必逛', '#ff2442')">🔴 必逛</button>
+<button class="btn btn-secondary" onclick="addSticker('避雷', '#000')">⚫ 避雷</button>
+<button class="btn btn-secondary" onclick="addSticker('爆款', '#E68A00')">🔥 爆款</button>
+</div>
+</div>
+</div>
+</div>
 
-    <div class="brand-watermark">
-        <img src="logo.png" class="wm-logo" onerror="this.style.display='none'">
-        <div class="wm-text">YIEZHII内部通用版</div>
-    </div>
-
-    <div class="app-container" id="app">
-        <aside class="sidebar">
-            <div class="control-panel">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('content')">📝 内容</button>
-                    <button class="tab-btn" onclick="switchTab('style')">🎨 风格</button>
-                    <button class="tab-btn" onclick="switchTab('details')">🛠️ 微调</button>
-                </div>
-
-                <div id="tab-content" class="panel-content active">
-                    <div class="control-group">
-                        <div class="group-title">标题内容</div>
-                        <input type="text" id="titleInput" value="四季青热门大码档口分享" oninput="syncTitle()" style="margin-bottom:5px;">
-                        <label style="font-size:12px;"><input type="checkbox" id="breakTitleCheck" onchange="syncTitle()" checked> 自动换行</label>
-                    </div>
-                    <div class="control-group">
-                        <div class="group-title">数据管理</div>
-                        <div style="display:flex; gap:10px; margin-bottom:10px;">
-                            <button class="btn btn-secondary" onclick="openDataManager()" style="flex:1">📂 管理数据</button>
-                            <button class="btn btn-secondary" onclick="document.getElementById('impArea').style.display='block'" style="flex:1">📋 导入</button>
-                        </div>
-                        <div id="impArea" style="display:none;">
-                            <textarea id="importText" placeholder="粘贴内容..." style="height:60px;"></textarea>
-                            <button class="btn btn-primary" style="margin-top:5px; padding:5px;" onclick="importData()">确认导入</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-style" class="panel-content">
-                    <div class="control-group">
-                        <div class="group-title">点击选择风格</div>
-                        <div class="visual-selector">
-                            <div class="visual-opt active" onclick="setPaperStyle('default', this)"><div class="visual-preview" style="background:#FDFBF7"></div><div class="visual-label">极简</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">横线</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('phone', this)"><div class="visual-preview" style="background:#f7f7f7; border-top:5px solid #eee;"></div><div class="visual-label">备忘录</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('yellow', this)"><div class="visual-preview" style="background:#FFD954"></div><div class="visual-label">便签</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('grid-browser', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">网格</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('gold', this)"><div class="visual-preview vp-gold"></div><div class="visual-label">金色</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('macos', this)"><div class="visual-preview vp-mac"></div><div class="visual-label">Mac</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('yellow-app', this)"><div class="visual-preview" style="background:#FDFCF6; border-top:3px solid orange;"></div><div class="visual-label">APP</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('rounded', this)"><div class="visual-preview" style="background:#ccc; padding:3px;"><div style="background:#fff; height:100%"></div></div><div class="visual-label">圆角</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('mac-grid', this)"><div class="visual-preview" style="background:#fff; border-top:8px solid #eee;"></div><div class="visual-label">Mac网</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('texture', this)"><div class="visual-preview" style="background:#f0f0f0;"></div><div class="visual-label">纹理</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('draft-grid', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">工程</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('yellow-bar', this)"><div class="visual-preview" style="background:#fff; border-top:10px solid #F8D868"></div><div class="visual-label">黄栏</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('yellow-lite', this)"><div class="visual-preview" style="background:#fff; border-left:3px solid #E6B800"></div><div class="visual-label">极简黄</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('bottom-line', this)"><div class="visual-preview" style="background:#fff; border-bottom:3px solid #E0C090"></div><div class="visual-label">底线</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('date-lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">日期</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('dashed', this)"><div class="visual-preview" style="border-bottom:1px dashed #ccc; background:#f9f9f9"></div><div class="visual-label">虚线</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('spiral', this)"><div class="visual-preview" style="background:#fcf9f2; border-left:5px double #ccc;"></div><div class="visual-label">螺旋</div></div>
-                            <div class="visual-opt" onclick="setPaperStyle('minimal', this)"><div class="visual-preview" style="background:#fff;"></div><div class="visual-label">极简2</div></div>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <div class="group-title">主题配色</div>
-                        <div class="color-dots">
-                            <div class="color-dot active" style="background:#FDFBF7" onclick="setTheme(0)"></div>
-                            <div class="color-dot" style="background:#F0F4F8" onclick="setTheme(1)"></div>
-                            <div class="color-dot" style="background:#F1F5EB" onclick="setTheme(2)"></div>
-                            <div class="color-dot" style="background:#F6F0F8" onclick="setTheme(3)"></div>
-                            <div class="color-dot" style="background:#FFFFFF; border:1px solid #ddd;" onclick="setTheme(4)"></div>
-                            <div class="color-dot" style="background:#333" onclick="setTheme(5)"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-details" class="panel-content">
-                    <div class="control-group">
-                        <div class="group-title">排版对齐</div>
-                        <div style="display:flex; gap:5px; margin-bottom:10px;">
-                            <button class="btn btn-secondary" style="flex:1" onclick="updateCSSVar('--title-align', 'left')">⬅️ 左</button>
-                            <button class="btn btn-secondary" style="flex:1" onclick="updateCSSVar('--title-align', 'center')">⬇️ 中</button>
-                            <button class="btn btn-secondary" style="flex:1" onclick="updateCSSVar('--title-align', 'right')">➡️ 右</button>
-                        </div>
-                        <div class="input-row">
-                            <span style="font-size:12px;">序号:</span>
-                            <select id="indexStyleSelect" onchange="renderCurrentData()" style="flex:1">
-                                <option value="circle">空心圆 (①)</option>
-                                <option value="solid">实心黑 (❶)</option>
-                                <option value="pad">补零 (01)</option>
-                                <option value="badge">胶囊 (■)</option>
-                                <option value="dot">简约 (1.)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="group-title">尺寸滑块</div>
-                        <div style="display:flex; flex-direction:column; gap:10px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:12px;">标题字号</span>
-                                <input type="range" min="20" max="50" value="32" oninput="updateCSSVar('--title-size', this.value + 'px')" style="width:60%">
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:12px;">正文字号</span>
-                                <input type="range" min="12" max="18" value="14" oninput="updateCSSVar('--list-size', this.value + 'px')" style="width:60%">
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:12px;">行间距</span>
-                                <input type="range" id="gapSlider" min="5" max="40" value="12" oninput="updateCSSVar('--list-gap', this.value + 'px')" style="width:60%">
-                            </div>
-                            <div id="gapInfo" style="display:none; text-align:right; font-size:10px; color:#ff2442;">(当前风格固定行高)</div>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <div class="group-title">装饰贴纸</div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                            <button class="btn btn-secondary" onclick="document.getElementById('logoUpload').click()">➕ Logo</button>
-                            <input type="file" id="logoUpload" hidden onchange="addLogo(this)">
-                            <button class="btn btn-secondary" onclick="addSticker('必逛', '#ff2442')">🔴 必逛</button>
-                            <button class="btn btn-secondary" onclick="addSticker('避雷', '#000')">⚫ 避雷</button>
-                            <button class="btn btn-secondary" onclick="addSticker('爆款', '#E68A00')">🔥 爆款</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top:20px; background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
-                <button class="btn btn-primary" onclick="generateNewData()">🎲 随机生成</button>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn btn-secondary" style="flex:1" onclick="downloadImages()">⬇️ 下载</button>
-                    <button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('bgUpload').click()">🖼️ 换图</button>
-                    <input type="file" id="bgUpload" hidden onchange="changeBg(this)">
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-preview">
-            <div class="xhs-card" id="card1">
-                <div class="custom-bg-overlay"></div>
-                <div class="inner-sheet-wrapper">
-                    <div class="paper-macos-bar" style="display:none;"></div>
-                    <div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
-                    <div class="card-header">
-                        <h1 class="main-title" contenteditable="true">标题</h1>
-                        <div class="header-icons" style="display:none;"><span class="icon-star">★</span> <span class="icon-bubble"></span></div>
-                    </div>
-                    <div class="card-content" id="list1"></div>
-                    <div class="paper-yellow-app-footer" style="display:none;"><div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div></div>
-                    <div class="paper-texture-footer" style="display:none;"><div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div></div>
-                    <div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
-                    <div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
-                    <div class="paper-bottom-line-footer" style="display:none;"></div>
-                </div>
-            </div>
-            <div class="xhs-card" id="card2">
-                <div class="custom-bg-overlay"></div>
-                <div class="inner-sheet-wrapper">
-                    <div class="paper-macos-bar" style="display:none;"></div>
-                    <div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
-                    <div class="card-header">
-                        <h1 class="main-title" contenteditable="true">标题</h1>
-                        <div class="header-icons" style="display:none;"><span class="icon-star">★</span> <span class="icon-bubble"></span></div>
-                    </div>
-                    <div class="card-content" id="list2"></div>
-                    <div class="paper-yellow-app-footer" style="display:none;"><div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div></div>
-                    <div class="paper-texture-footer" style="display:none;"><div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div></div>
-                    <div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
-                    <div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
-                    <div class="paper-bottom-line-footer" style="display:none;"></div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <div id="dataManagerModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>数据管理 <button onclick="closeDataManager()" style="float:right; border:none; background:none; cursor:pointer; font-size:16px;">✕</button></h3>
-            <div class="data-list" id="dataList"></div>
-            <button class="btn btn-secondary" style="color:red;" onclick="resetData()">重置所有数据</button>
-        </div>
-    </div>
-
+<div class="control-panel" id="knowledgePanel" style="display:none;">
+<div style="padding:16px;">
+<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+<div style="font-weight:900;">🧠 知识模版生成</div>
+<span style="font-size:12px; color:#ff2442; background:rgba(255,36,66,0.08); padding:3px 8px; border-radius:999px; font-weight:700;">NEW</span>
+</div>
+<textarea id="knowledgeText" placeholder="粘贴知识文案（含标题/副标题/Step结构）..." style="width:100%; height:160px; padding:10px; border:1px solid #eee; border-radius:10px; font-size:13px; line-height:1.5; resize:vertical;"></textarea>
+<div style="display:flex; gap:10px; margin-top:10px;">
+<button class="btn btn-primary" onclick="knowledgeFillExample()" style="flex:1">📋 示例</button>
+<button class="btn btn-primary" onclick="knowledgeGenerate()" style="flex:1">🧾 一键排版</button>
+</div>
+<div style="display:flex; gap:10px; margin-top:10px;">
+<button class="btn btn-secondary" onclick="knowledgeDownload()" style="flex:1">⬇️ 下载知识图片</button>
+<button class="btn btn-secondary" onclick="knowledgeClear()" style="flex:1">🧹 清空</button>
+</div>
+<div style="margin-top:12px;">
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<div style="font-weight:800;">排版字号</div>
+<div style="font-size:12px; color:#666;"><span id="knowledgeScaleLabel">100%</span> | 页数：<span id="knowledgePageCount">0</span></div>
+</div>
+<input id="knowledgeScale" max="120" min="80" oninput="knowledgeUpdateScale()" style="width:100%; margin-top:8px;" type="range" value="100"/>
+<div style="font-size:12px; color:#888; margin-top:6px;">提示：字号越小越能减少分页；字号越大更醒目但可能分页更多。</div>
+</div>
+</div>
+</div>
+<div style="margin-top:20px; background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+<button class="btn btn-primary" onclick="generateNewData()">🎲 随机生成</button>
+<div style="display:flex; gap:10px; margin-top:10px;">
+<button class="btn btn-secondary" onclick="downloadImages()" style="flex:1">⬇️ 下载</button>
+<button class="btn btn-secondary" onclick="document.getElementById('bgUpload').click()" style="flex:1">🖼️ 换图</button>
+<input hidden="" id="bgUpload" onchange="changeBg(this)" type="file"/>
+</div>
+</div>
+</aside>
+<main class="main-preview"><div id="classicPreview" style="display:flex; flex-wrap:wrap; gap:40px; justify-content:center;"><div class="xhs-card" id="card1">
+<div class="custom-bg-overlay"></div>
+<div class="inner-sheet-wrapper">
+<div class="paper-macos-bar" style="display:none;"></div>
+<div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
+<div class="card-header">
+<h1 class="main-title" contenteditable="true">标题</h1>
+<div class="header-icons" style="display:none;"><span class="icon-star">★</span> <span class="icon-bubble"></span></div>
+</div>
+<div class="card-content" id="list1"></div>
+<div class="paper-yellow-app-footer" style="display:none;"><div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div></div>
+<div class="paper-texture-footer" style="display:none;"><div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div></div>
+<div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
+<div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
+<div class="paper-bottom-line-footer" style="display:none;"></div>
+</div>
+</div><div class="xhs-card" id="card2">
+<div class="custom-bg-overlay"></div>
+<div class="inner-sheet-wrapper">
+<div class="paper-macos-bar" style="display:none;"></div>
+<div class="mac-grid-tools" style="display:none;"><div class="mac-tool-icon"></div><div class="mac-tool-icon"></div></div>
+<div class="card-header">
+<h1 class="main-title" contenteditable="true">标题</h1>
+<div class="header-icons" style="display:none;"><span class="icon-star">★</span> <span class="icon-bubble"></span></div>
+</div>
+<div class="card-content" id="list2"></div>
+<div class="paper-yellow-app-footer" style="display:none;"><div class="icon-mock"></div> <div class="icon-mock icon-circle"></div> <div class="icon-mock"></div> <div class="icon-mock"></div></div>
+<div class="paper-texture-footer" style="display:none;"><div class="icon-gray icon-bell"></div> <div class="icon-gray"></div> <div class="icon-gray"></div></div>
+<div class="paper-grid-browser-footer" style="display:none;"><span>BIAOTI</span> <span>MOBAN</span></div>
+<div class="paper-gold-footer" style="display:none;"><div class="building-roof"></div><div class="building-body"></div></div>
+<div class="paper-bottom-line-footer" style="display:none;"></div>
+</div>
+</div></div><div id="knowledgePreview" style="display:none; display:flex; flex-wrap:wrap; gap:40px; justify-content:center;"></div></main>
+</div>
+<div class="modal-overlay" id="dataManagerModal">
+<div class="modal-content">
+<h3>数据管理 <button onclick="closeDataManager()" style="float:right; border:none; background:none; cursor:pointer; font-size:16px;">✕</button></h3>
+<div class="data-list" id="dataList"></div>
+<button class="btn btn-secondary" onclick="resetData()" style="color:red;">重置所有数据</button>
+</div>
+</div>
 <script>
     // 登录校验
     function checkToken() {
@@ -522,7 +681,38 @@
     let brands = JSON.parse(localStorage.getItem('xhs_brands')) || [...defaultData];
     const indexMaps = { circle: ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑲','⑲','⑳','㉑','㉒','㉓','㉔'], solid: ['❶','❷','❸','❹','❺','❻','❼','❽','❾','❿','⓫','⓬','⓭','⓮','⓯','⓰','⓱','⓲','⓳','⓴','㉑','㉒','㉓','㉔'] };
 
-    function updateCSSVar(key, val) { document.documentElement.style.setProperty(key, val); }
+    function updateCSSVar(key, val) { 
+        document.documentElement.style.setProperty(key, val); 
+        // 同步到「知识模版生成」的文字样式（不影响原始两张卡的 CSS 变量）
+        if(key === '--list-size'){ document.documentElement.style.setProperty('--k-body-size', val); }
+        if(key === '--line-height'){ document.documentElement.style.setProperty('--k-line-height', val); }
+        if(key === '--title-size'){ document.documentElement.style.setProperty('--k-title-size', val); }
+        // 若当前处于知识模式，则立即重排分页（字号/行距变动会影响分页）
+        try{
+            if(window.APP_MODE === 'knowledge' && typeof window.generateKnowledgeFromTextarea === 'function'){
+                window.generateKnowledgeFromTextarea(true); // true=soft rerender
+            }
+        }catch(e){}
+    }
+    // 当前风格标记（用于行距/行高联动）
+    let CURRENT_PAPER_STYLE = 'default';
+
+    // 行距/行高控制：
+    // - 横线/网格等固定行类模板：调节每行行高（--row-height）
+    // - 其他模板：调节段落行距（--text-line-height）
+    function updateLineSpacing(v){
+        const val = parseInt(v, 10);
+        const isGrid = ['lined','draft-grid','yellow-bar','mac-grid','date-lined','dashed','grid-browser'].includes(CURRENT_PAPER_STYLE);
+        if(isGrid){
+            // 以 150% => 40px 作为基准，做线性缩放
+            const rh = Math.round(40 * (val / 150));
+            updateCSSVar('--row-height', rh + 'px');
+        }else{
+            const lh = (val / 100).toFixed(2);
+            updateCSSVar('--text-line-height', lh);
+        }
+    }
+
     function switchTab(id) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
@@ -560,7 +750,7 @@
 
             const div = document.createElement('div');
             div.className = `list-item ${item.isMine ? 'my-brand' : ''}`;
-            div.innerHTML = `<span class="item-index index-style-${style}">${idxHtml}</span><div class="item-info" contenteditable="true"><span class="brand-name">${item.name}📍(${item.loc})</span><span class="item-text">${item.desc}</span></div>`;
+            div.innerHTML = `<span class="item-index index-style-${style}">${idxHtml}</span><div class="item-info" contenteditable="true"><span class="brand-name">${item.name}📍(${item.loc})</span><span class="item-text" contenteditable="true">${item.desc}</span></div>`;
             container.appendChild(div);
         });
     }
@@ -574,9 +764,14 @@
     }
 
     function setPaperStyle(name, btn) {
+        CURRENT_PAPER_STYLE = name;
         document.querySelectorAll('.visual-opt').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        document.querySelectorAll('.xhs-card').forEach(c => c.className = `xhs-card paper-${name}`);
+        document.querySelectorAll('.xhs-card').forEach(c => {
+            // 只切换 paper-*，不破坏 knowledge-card/is-cont/no-subtitle 等状态类
+            [...c.classList].filter(cl=>cl.startsWith('paper-')).forEach(cl=>c.classList.remove(cl));
+            c.classList.add(`paper-${name}`);
+        });
         
         const wrappers = document.querySelectorAll('.inner-sheet-wrapper');
         wrappers.forEach(w => w.className = (name === 'rounded' || name === 'yellow') ? 'inner-sheet-wrapper inner-sheet' : 'inner-sheet-wrapper');
@@ -600,12 +795,12 @@
         const slider = document.getElementById('gapSlider');
         const gapInfo = document.getElementById('gapInfo');
         
-        slider.disabled = isGrid;
-        gapInfo.style.display = isGrid ? 'block' : 'none';
-        
-        updateCSSVar('--list-gap', isGrid ? '0px' : '12px');
+        gapInfo.style.display = 'block';
+        // 切风格时：网格/横线类默认 150%（40px 行高），其他类默认 150%（1.5 行距）
+        slider.value = 150;
+        updateLineSpacing(150);
+        // 字号：网格类默认稍大一点
         updateCSSVar('--list-size', isGrid ? '16px' : '14px');
-        if(!isGrid) slider.value = 12;
     }
 
     const themes = [{bg:'#FDFBF7',t1:'#2C2C2C',l:'#d1d1d1'}, {bg:'#F0F4F8',t1:'#3D4C53',l:'#dae1e7'}, {bg:'#F1F5EB',t1:'#3A4A3A',l:'#dbe4d5'}, {bg:'#F6F0F8',t1:'#4A3A4A',l:'#e3dce6'}, {bg:'#FFFFFF',t1:'#111',l:'#eee'}, {bg:'#333',t1:'#fff',l:'#555'}];
@@ -675,6 +870,470 @@
     }
 
     window.onload = generateNewData;
+
+
+/* =========================
+   知识模版生成（独立模式）
+   不影响原始随机生成逻辑
+========================= */
+let APP_MODE = 'classic';
+let KNOWLEDGE_FONT_SCALE = 100; // 80~120，缩放知识卡文字
+let KNOWLEDGE_PAGES = [];
+
+function setAppMode(mode){
+  APP_MODE = mode;
+  const classic = document.getElementById('classicPreview');
+  const knowledge = document.getElementById('knowledgePreview');
+  const kp = document.getElementById('knowledgePanel');
+
+  document.getElementById('modeClassicBtn').classList.toggle('btn-primary', mode==='classic');
+  document.getElementById('modeClassicBtn').classList.toggle('btn-secondary', mode!=='classic');
+  document.getElementById('modeKnowledgeBtn').classList.toggle('btn-primary', mode==='knowledge');
+  document.getElementById('modeKnowledgeBtn').classList.toggle('btn-secondary', mode!=='knowledge');
+
+  if(mode==='knowledge'){
+    classic.style.setProperty('display','none','important');
+    knowledge.style.setProperty('display','grid','important');
+    kp.style.display = 'block';
+  }else{
+    classic.style.setProperty('display','grid','important');
+    knowledge.style.setProperty('display','none','important');
+    kp.style.display = 'none';
+  }
+}
+
+function knowledgeSetScale(v){
+  KNOWLEDGE_FONT_SCALE = parseInt(v,10);
+  const lab = document.getElementById('knowledgeScaleLabel');
+  if(lab) lab.textContent = KNOWLEDGE_FONT_SCALE + '%';
+  // 若已经生成过，缩放后自动重排分页
+  if(KNOWLEDGE_PAGES && KNOWLEDGE_PAGES.length){
+    knowledgeRenderPages(KNOWLEDGE_PAGES.sourceParsed);
+  }
+}
+
+function knowledgeClear(){
+  document.getElementById('knowledgeText').value = '';
+  KNOWLEDGE_PAGES = [];
+  const wrap = document.getElementById('knowledgePreview');
+  wrap.innerHTML = '';
+  document.getElementById('knowledgePageCount').textContent = '0';
+}
+
+function knowledgeFillExample(){
+  document.getElementById('knowledgeText').value = `标题：新手开服装工作室全流程攻略
+看完这篇少走3年弯路！！
+
+正文：Step 1：明确风格与客群
+先问自己：想做韩系简约、大码女装还是小众设计？
+根据风格锁定目标客群（比如学生党/职场女性），再调研她们的消费习惯和审美偏好记住：精准定位=成功一半！
+
+Step 2：选址与证件
+家里腾个角落或租小单间就够用！省下房租搞装修不香吗？
+需办理个体户营业执照（材料：身份证+场地证明+店名3个备选），只做线上的可暂不注册～
+
+Step 3：预算清单
+基础启动资金≈5k-1w：
+✅ 陈列架 (190元/个) ✔️ 带手模特 (200元)
+✅ 补光灯 (150元) ✔️ 装饰品 (500-800元)
+✅ 首批拿货 (2000元+)
+⚠️ 控制成本！前期可拼单样衣减少囤货～
+
+Step 4：拍照场景布置
+重视光线，落地镜 + 环形补光灯是出片神器，背景用ins风挂画/绿植增加层次感。定期更换布景，保持新鲜度！
+陈列上木质架有温度，衣服按色系/场景分类，搭配帽子、包包等配饰营造氛围。模特穿主推款，动态pose更吸睛~
+
+Step 5：拿货技巧
+新手先去二批市场（如杭州四季青），支持混批调换😊！拿货比例：上衣50%+下装30%+连衣裙20%，成套拿减少搭配难题。爆款慎追，小众设计更易出圈~
+
+Step 6：引爆流量与转化
+线上引流三板斧
+① 小红书：拍“工作室创业 vlog+穿搭教程”，带#服装创业#话题；
+② 朋友圈：发客户上身图+好评截图，屏蔽领导同事避免尴尬；
+③ 直播：挂“福袋”抽奖留人，展示面料细节和试穿效果～
+线下拓客秘籍
+异业合作！与美甲店/咖啡店互推，满赠活动发定制手提袋（印工作室 logo 超有仪式感）
+
+Step 7：日常运营与升级
+客户管理
+建 VIP 社群发专属福利，记录客户三围/风格偏好，推款时@她超贴心！退换货爽快，口碑裂变更快～
+数据复盘
+每周分析爆款共性（颜色/面料/价格），滞销款及时打折清仓。记住：灵活调整 > 盲目坚持！`;
+}
+
+/* 解析：标题/副标题/Step结构 */
+function parseKnowledge(raw){
+  const lines = raw.replace(/\r/g,'').split('\n').map(s=>s.trim()).filter(Boolean);
+  let title = '';
+  let subtitle = '';
+  let bodyStartIdx = 0;
+
+  if(lines[0] && /^标题[:：]/.test(lines[0])){ title = lines[0].replace(/^标题[:：]\s*/,''); bodyStartIdx = 1; }
+  else { title = lines[0] || ''; bodyStartIdx = 1; }
+
+  if(lines[bodyStartIdx] && (/^看完/.test(lines[bodyStartIdx]) || /^副标题[:：]/.test(lines[bodyStartIdx]))){
+    subtitle = lines[bodyStartIdx].replace(/^副标题[:：]\s*/,'');
+    bodyStartIdx++;
+  }
+
+  // 跳过“正文：”行
+  if(lines[bodyStartIdx] && /^正文[:：]/.test(lines[bodyStartIdx])) bodyStartIdx++;
+
+  const steps = [];
+  let cur = null;
+
+  const stepRe = /^Step\s*([0-9]+)\s*[:：]\s*(.+)$/i;
+
+  for(let i=bodyStartIdx;i<lines.length;i++){
+    const line = lines[i];
+    const m = line.match(stepRe);
+    if(m){
+      if(cur) steps.push(cur);
+      cur = { num: parseInt(m[1],10), title: m[2].trim(), lines: [] };
+      continue;
+    }
+    if(!cur){
+      // 作为前导段落放到 Step0
+      cur = { num: 0, title: '', lines: [] };
+    }
+    cur.lines.push(line);
+  }
+  if(cur) steps.push(cur);
+
+  // 如果有 num=0 的前导段落，单独拿出来
+  const lead = steps.length && steps[0].num===0 ? steps.shift() : null;
+
+  return { title, subtitle, lead, steps };
+}
+
+function isBulletLine(s){
+  return /^[✅✔️⚠️•\-—]/.test(s) || /^[0-9]+[\.、]/.test(s) || /^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s);
+}
+
+function buildStepEl(step){
+  const wrap = document.createElement('div');
+  wrap.className = 'kt-step';
+
+  const head = document.createElement('div');
+  head.className = 'kt-step-head';
+
+  const idx = document.createElement('div');
+  idx.className = 'kt-step-idx';
+  idx.textContent = step.num ? getIndexLabel(step.num) : '';
+
+  const ttl = document.createElement('div');
+  ttl.className = 'kt-step-title';
+  ttl.textContent = step.num ? `Step ${step.num}： ${step.title}` : step.title;
+
+  head.appendChild(idx);
+  head.appendChild(ttl);
+
+  const body = document.createElement('div');
+  body.className = 'kt-step-body';
+
+  // 拆 bullets
+  const normal = [];
+  const bullets = [];
+  step.lines.forEach(l=>{
+    if(isBulletLine(l)) bullets.push(l);
+    else normal.push(l);
+  });
+
+  body.textContent = normal.join('\n');
+
+  wrap.appendChild(head);
+  wrap.appendChild(body);
+
+  if(bullets.length){
+    const bl = document.createElement('div');
+    bl.className = 'kt-bullets';
+    bullets.forEach(b=>{
+      const row=document.createElement('div');
+      row.className='kt-bullet';
+      const dot=document.createElement('div');
+      dot.className='kt-bullet-dot';
+      const tx=document.createElement('div');
+      tx.style.flex='1';
+      tx.textContent=b;
+      row.appendChild(dot); row.appendChild(tx);
+      bl.appendChild(row);
+    });
+    wrap.appendChild(bl);
+  }
+
+  return wrap;
+}
+
+/* 序号样式：复用你原本 micro 调整里的 indexType */
+function getIndexLabel(n){
+  // 读取原页面的序号下拉（如果存在）
+  const sel = document.getElementById('indexType');
+  const type = sel ? sel.value : 'circle';
+  if(typeof indexMaps !== 'undefined' && indexMaps[type] && indexMaps[type][n-1]){
+    return indexMaps[type][n-1];
+  }
+  // 兜底：数字
+  return String(n);
+}
+
+/* 创建一张知识卡（复用 xhs-card 样式） */
+function createKnowledgeCard(pageTitle, pageIdx){
+  const card = document.createElement('div');
+  card.className = 'xhs-card knowledge-card paper-' + (typeof CURRENT_PAPER_STYLE!=='undefined'?CURRENT_PAPER_STYLE:'default');
+  card.style.setProperty('--kScale', (KNOWLEDGE_FONT_SCALE/100).toString());
+
+  // 首图与续页都显示标题；续页标题稍小（见 .is-cont 样式），并且不显示页尾“续+数字”
+  if(pageIdx>1) card.classList.add('is-cont');
+
+  card.innerHTML = `
+    <div class="main-title" contenteditable="true">${pageTitle}</div>
+    <div class="divider"></div>
+    <div class="kt-content">
+      <div class="kt-subtitle" id="ktSubtitle${pageIdx}" contenteditable="true"></div>
+      <div class="kt-steps" id="ktSteps${pageIdx}"></div>
+    </div>
+    <div class="kt-footer"></div>
+  `;
+  return card;
+}
+
+
+/* 自动分页：按真实溢出检测 */
+function knowledgeRenderPages(parsed){
+  const wrap = document.getElementById('knowledgePreview');
+  wrap.innerHTML = '';
+  const pages = [];
+  const titleBase = parsed.title || '知识笔记';
+  const subtitle = parsed.subtitle || '';
+
+  // 临时测量容器（不可见）
+  const measure = document.createElement('div');
+  measure.style.position='fixed';
+  measure.style.left='-99999px';
+  measure.style.top='0';
+  measure.style.width='450px';
+  measure.style.height='600px';
+  measure.style.pointerEvents='none';
+  document.body.appendChild(measure);
+
+  let pageIdx = 1;
+  let card = createKnowledgeCard(titleBase, pageIdx);
+  measure.appendChild(card);
+
+  // subtitle只放第一页
+  const setSubtitle = () => {
+    const el = card.querySelector('.kt-subtitle');
+    if(el) el.textContent = subtitle ? subtitle : '';
+    if(subtitle) card.classList.remove('no-subtitle');
+  };
+  setSubtitle();
+  if(!subtitle) card.classList.add('no-subtitle');
+
+  const stepsContainer = card.querySelector('.kt-steps');
+  const contentContainer = card.querySelector('.kt-content');
+
+  // 前导段落（如果有）
+  if(parsed.lead && parsed.lead.lines && parsed.lead.lines.length){
+    const leadStep = { num: 0, title: '', lines: parsed.lead.lines };
+    const el = buildStepEl(leadStep);
+    stepsContainer.appendChild(el);
+  }
+
+  const pushPage = () => {
+    // 避免空白页：只有当当前页有实际内容时才收集
+    const hasContent = card.querySelector('.kt-steps') && card.querySelector('.kt-steps').children.length > 0;
+    if(hasContent){
+      pages.push(card.cloneNode(true));
+    }
+  };
+
+  const newPage = () => {
+    measure.innerHTML='';
+    pageIdx++;
+    card = createKnowledgeCard(titleBase, pageIdx);
+    measure.appendChild(card);
+    // 续页不显示 subtitle
+    card.classList.add('no-subtitle');
+    const el = card.querySelector('.kt-subtitle');
+    if(el) el.textContent = '';
+    return {
+      stepsContainer: card.querySelector('.kt-steps'),
+      contentContainer: card.querySelector('.kt-content')
+    };
+  };
+
+  let ctx = { stepsContainer, contentContainer };
+
+  
+  function buildStepShell(step, isCont){
+    const el = document.createElement('div');
+    el.className = 'kt-step';
+
+    const head = document.createElement('div');
+    head.className = 'kt-step-head';
+    head.textContent = (step.num ? `Step ${step.num}：` : '') + (step.title||'') + (isCont ? '（续）' : '');
+    head.contentEditable = true;
+
+    const body = document.createElement('div');
+    body.className = 'kt-step-body';
+    body.contentEditable = true;
+
+    const right = document.createElement('div');
+    right.className = 'kt-step-right';
+    right.appendChild(head);
+    right.appendChild(body);
+
+    el.appendChild(right);
+    return { el, body };
+  }
+
+  function buildLineEl(line){
+    // 列表行识别（✅ ✔️ ⚠️ • - ①②③ 等）
+    const isBullet = /^[✅✔️⚠️•\-①-⑳]/.test(line);
+    if(isBullet){
+      const li = document.createElement('div');
+      li.className = 'kt-bullet';
+      li.textContent = line; li.contentEditable = true;
+      return li;
+    }
+    const p = document.createElement('div');
+    p.className = 'kt-p';
+    p.textContent = line; p.contentEditable = true;
+    return p;
+  }
+
+  // 逐行分页：同一 Step 过长时允许拆分到下一页，减少空白 & 支持字号缩小后减少页数
+  parsed.steps.forEach(step=>{
+    // 前导段落（num=0）当成普通段落组
+    if(step.num === 0){
+      for(const line of step.lines){
+        const p = buildLineEl(line);
+        ctx.stepsContainer.appendChild(p);
+        if(ctx.contentContainer.scrollHeight > ctx.contentContainer.clientHeight){
+          ctx.stepsContainer.removeChild(p);
+          pushPage();
+          ctx = newPage();
+          ctx.stepsContainer.appendChild(p);
+        }
+      }
+      return;
+    }
+
+    let segIdx = 0;
+    let isCont = false;
+
+    while(segIdx < step.lines.length){
+      const shell = buildStepShell(step, isCont);
+      ctx.stepsContainer.appendChild(shell.el);
+
+      // 尝试逐行塞进当前页
+      while(segIdx < step.lines.length){
+        const node = buildLineEl(step.lines[segIdx]);
+        shell.body.appendChild(node);
+
+        if(ctx.contentContainer.scrollHeight > ctx.contentContainer.clientHeight){
+          // 回退这一行
+          shell.body.removeChild(node);
+
+          // 如果这一页这个 step 一个内容都没放进去，说明剩余空间太小 -> 直接换页再试
+          if(shell.body.childElementCount === 0){
+            ctx.stepsContainer.removeChild(shell.el);
+          }
+
+          pushPage();
+          ctx = newPage();
+          isCont = true;
+          // 在新页继续塞同一 step 的这一行
+          break;
+        }else{
+          segIdx++;
+        }
+      }
+
+      // 如果当前 step 已经塞完了，结束
+      if(segIdx >= step.lines.length) break;
+
+      // 如果刚好换页导致本轮没有推进 segIdx，需要继续 while
+    }
+  });
+
+  // 最后一页收集
+  pushPage();
+
+  // 输出到真实页面（注意 scale 影响尺寸；为避免被挤压，外层用 inline-block）
+  pages.forEach((node)=>{
+    const holder = document.createElement('div');
+    holder.className='knowledge-page-holder';
+    holder.appendChild(node);
+    wrap.appendChild(holder);
+  });
+
+  document.body.removeChild(measure);
+
+  document.getElementById('knowledgePageCount').textContent = String(pages.length);
+
+  KNOWLEDGE_PAGES = pages;
+  KNOWLEDGE_PAGES.sourceParsed = parsed;
+}
+
+function knowledgeUpdateScale(){
+  const v = Number(document.getElementById('knowledgeScale').value);
+  KNOWLEDGE_FONT_SCALE = v;
+  document.getElementById('knowledgeScaleLabel').textContent = v + '%';
+  const raw = document.getElementById('knowledgeText').value.trim();
+  if(raw){
+    knowledgeRenderPages(parseKnowledge(raw));
+  }
+}
+
+function knowledgeGenerate(){
+  const raw = document.getElementById('knowledgeText').value.trim();
+  if(!raw){
+    alert('请先粘贴文案');
+    return;
+  }
+  const parsed = parseKnowledge(raw);
+  knowledgeRenderPages(parsed);
+  setAppMode('knowledge');
+}
+
+async function knowledgeDownload(){
+  const wrap = document.getElementById('knowledgePreview');
+  const cards = wrap.querySelectorAll('.knowledge-card');
+  if(!cards.length){
+    alert('请先“一键排版”生成知识卡');
+    return;
+  }
+  const title = (parseKnowledge(document.getElementById('knowledgeText').value).title || '知识笔记').replace(/[\\\/:*?"<>|]/g,'_');
+
+  // 逐张下载
+  for(let i=0;i<cards.length;i++){
+    const card = cards[i];
+    // 暂时还原 scale 到 1，再截图更清晰：用 clone 覆盖
+    const clone = card.cloneNode(true);
+    /* 字号缩放已在内容内实现，无需处理 transform */
+    clone.style.position='fixed';
+    clone.style.left='-99999px';
+    clone.style.top='0';
+    document.body.appendChild(clone);
+
+    const canvas = await html2canvas(clone, { scale: 2, backgroundColor: null });
+    const link = document.createElement('a');
+    link.download = `${title}_第${i+1}张.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    document.body.removeChild(clone);
+    await new Promise(r=>setTimeout(r, 180));
+  }
+}
+
+/* 初始化：默认 classic */
+window.addEventListener('DOMContentLoaded', ()=>{
+  setAppMode('classic');
+  // 同步滑块label
+  knowledgeSetScale(document.getElementById('knowledgeScale').value);
+});
 </script>
 </body>
 </html>
