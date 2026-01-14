@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>YIEZHII-小红书内部通版AI生成神器 V9.3</title>
+<title>意帜-小红书B端排版神器 V9.3 (知识模版生成稳定版)</title>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
@@ -963,46 +963,117 @@ Step 7：日常运营与升级
 
 /* 解析：标题/副标题/Step结构 */
 function parseKnowledge(raw){
-  const lines = raw.replace(/\r/g,'').split('\n').map(s=>s.trim()).filter(Boolean);
-  let title = '';
+  // 更稳健的解析：支持 Markdown（### 标题、**加粗小标题**）、空行分段、中文序号等
+  const srcLines = raw.replace(/\r/g,'').split('\n');
+
+  // 保留空行（用于段落分段），但去掉两端多余空白
+  const lines = srcLines.map(s => (s||'').trim());
+
+  // 取第一个非空行作为标题（支持 “标题：” 或 Markdown #/##/###）
+  let idx = 0;
+  while(idx < lines.length && !lines[idx]) idx++;
+  let title = lines[idx] || '';
+  if(/^标题[:：]/.test(title)) title = title.replace(/^标题[:：]\s*/,'');
+  title = title.replace(/^#{1,6}\s*/,'').trim();
+  idx++;
+
+  // subtitle：兼容旧规则（“看完…” / “副标题：…”）
   let subtitle = '';
-  let bodyStartIdx = 0;
-
-  if(lines[0] && /^标题[:：]/.test(lines[0])){ title = lines[0].replace(/^标题[:：]\s*/,''); bodyStartIdx = 1; }
-  else { title = lines[0] || ''; bodyStartIdx = 1; }
-
-  if(lines[bodyStartIdx] && (/^看完/.test(lines[bodyStartIdx]) || /^副标题[:：]/.test(lines[bodyStartIdx]))){
-    subtitle = lines[bodyStartIdx].replace(/^副标题[:：]\s*/,'');
-    bodyStartIdx++;
+  while(idx < lines.length && !lines[idx]) idx++;
+  if(lines[idx] && (/^看完/.test(lines[idx]) || /^副标题[:：]/.test(lines[idx]))){
+    subtitle = lines[idx].replace(/^副标题[:：]\s*/,'').trim();
+    idx++;
   }
 
-  // 跳过“正文：”行
-  if(lines[bodyStartIdx] && /^正文[:：]/.test(lines[bodyStartIdx])) bodyStartIdx++;
+  // 跳过“正文：”
+  while(idx < lines.length && !lines[idx]) idx++;
+  if(lines[idx] && /^正文[:：]/.test(lines[idx])) idx++;
 
-  const steps = [];
-  let cur = null;
-
-  const stepRe = /^Step\s*([0-9]+)\s*[:：]\s*(.+)$/i;
-
-  for(let i=bodyStartIdx;i<lines.length;i++){
-    const line = lines[i];
-    const m = line.match(stepRe);
-    if(m){
-      if(cur) steps.push(cur);
-      cur = { num: parseInt(m[1],10), title: m[2].trim(), lines: [] };
+  // 将后续内容按“空行”分块（段落块/标题块）
+  const blocks = [];
+  let cur = [];
+  for(let i=idx;i<lines.length;i++){
+    const l = lines[i];
+    if(!l){
+      if(cur.length){ blocks.push(cur); cur=[]; }
+      else { blocks.push(['']); } // 连续空行也保留一个占位，避免段落被吞
       continue;
     }
-    if(!cur){
-      // 作为前导段落放到 Step0
-      cur = { num: 0, title: '', lines: [] };
-    }
-    cur.lines.push(line);
+    cur.push(l);
   }
-  if(cur) steps.push(cur);
+  if(cur.length) blocks.push(cur);
 
-  // 如果有 num=0 的前导段落，单独拿出来
-  const lead = steps.length && steps[0].num===0 ? steps.shift() : null;
+  const isMdHeading = (s)=> /^#{1,6}\s+/.test(s);
+  const stripMdHeading = (s)=> s.replace(/^#{1,6}\s+/,'').trim();
+  const isBoldHeading = (s)=> /^\*\*.+\*\*$/.test(s) && s.replace(/\*/g,'').trim().length>0;
+  const stripBold = (s)=> s.replace(/^\*\*/,'').replace(/\*\*$/,'').trim();
 
+  // “像标题”的行：短、以冒号结尾、或中文序号/数字序号开头
+  const looksLikeSectionTitle = (s)=>{
+    if(!s) return false;
+    if(isMdHeading(s) || isBoldHeading(s)) return true;
+    if(s.length<=22 && /[:：]$/.test(s)) return true;
+    if(/^(Step\s*\d+|[0-9]+)[\.\、:：]/i.test(s)) return true;
+    if(/^([一二三四五六七八九十]+)[\.\、:：]/.test(s)) return true;
+    return false;
+  };
+
+  const steps = [];
+  const leadLines = [];
+  let curStep = null;
+
+  const pushLeadBlock = (blk)=>{
+    if(blk.length===1 && blk[0]===''){
+      if(leadLines.length && leadLines[leadLines.length-1] !== '') leadLines.push('');
+      return;
+    }
+    if(leadLines.length && leadLines[leadLines.length-1] !== '') leadLines.push('');
+    leadLines.push(...blk);
+  };
+
+  const appendToStep = (blk)=>{
+    if(!curStep){
+      curStep = { num: steps.length+1, title: '', lines: [] };
+      steps.push(curStep);
+    }
+    if(blk.length===1 && blk[0]===''){
+      if(curStep.lines.length && curStep.lines[curStep.lines.length-1] !== '') curStep.lines.push('');
+      return;
+    }
+    if(curStep.lines.length && curStep.lines[curStep.lines.length-1] !== '') curStep.lines.push('');
+    curStep.lines.push(...blk);
+  };
+
+  for(const blk of blocks){
+    if(blk.length===1 && blk[0]===''){
+      if(steps.length===0 && !curStep) pushLeadBlock(blk);
+      else appendToStep(blk);
+      continue;
+    }
+
+    const first = blk[0];
+    let titleLine = '';
+    if(isMdHeading(first)) titleLine = stripMdHeading(first);
+    else if(isBoldHeading(first)) titleLine = stripBold(first);
+    else if(looksLikeSectionTitle(first)){
+      titleLine = normalizeStepTitle(first.replace(/[:：]\s*$/,'').trim());
+    }
+
+    if(titleLine){
+      curStep = { num: steps.length+1, title: titleLine, lines: [] };
+      steps.push(curStep);
+      if(blk.length>1) curStep.lines.push(...blk.slice(1));
+      continue;
+    }
+
+    if(steps.length===0 && !curStep){
+      pushLeadBlock(blk);
+    }else{
+      appendToStep(blk);
+    }
+  }
+
+  const lead = leadLines.length ? { lines: leadLines } : null;
   return { title, subtitle, lead, steps };
 }
 
@@ -1023,7 +1094,7 @@ function buildStepEl(step){
 
   const ttl = document.createElement('div');
   ttl.className = 'kt-step-title';
-  ttl.textContent = step.num ? `Step ${step.num}： ${step.title}` : step.title;
+  ttl.textContent = step.title;
 
   head.appendChild(idx);
   head.appendChild(ttl);
@@ -1077,6 +1148,14 @@ function getIndexLabel(n){
 }
 
 /* 创建一张知识卡（复用 xhs-card 样式） */
+function normalizeStepTitle(t){
+  // 移除 Step 序号前缀（Step 1： / STEP1: / Step 2: ...）
+  return (t||'')
+    .replace(/^\s*Step\s*\d+\s*[:：]\s*/i, '')
+    .replace(/（续\d*）|\(续\d*\)/g, '')
+    .trim();
+}
+
 function createKnowledgeCard(pageTitle, pageIdx){
   const card = document.createElement('div');
   card.className = 'xhs-card knowledge-card paper-' + (typeof CURRENT_PAPER_STYLE!=='undefined'?CURRENT_PAPER_STYLE:'default');
@@ -1171,7 +1250,7 @@ function knowledgeRenderPages(parsed){
 
     const head = document.createElement('div');
     head.className = 'kt-step-head';
-    head.textContent = (step.num ? `Step ${step.num}：` : '') + (step.title||'') + (isCont ? '（续）' : '');
+    head.textContent = normalizeStepTitle(step.title||'');
     head.contentEditable = true;
 
     const body = document.createElement('div');
