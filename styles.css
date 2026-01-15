@@ -27,6 +27,9 @@
 --row-height: 40px;
 --title-align: left; 
             --card-padding: 35px;
+
+            /* 标题下方粗分割线（知识卡）开关：1=显示，0=隐藏（但不改变占位） */
+            --title-divider-on: 1;
         }
 
         body {
@@ -279,6 +282,70 @@
             line-height: 1.3; color: var(--text-primary); margin: 0; outline: none; cursor: text;
         }
 
+        /* ===== 知识卡：标题下方粗分割线（可开关） ===== */
+        .xhs-card.knowledge-card .divider{
+            height: 8px;
+            margin: 10px 0 14px;
+            border-top: 3px solid color-mix(in srgb, var(--text-primary) 92%, transparent);
+            border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 70%, transparent);
+            opacity: calc(var(--title-divider-on) * 1);
+        }
+        /* 关闭时：回到“无横线”原始排版（不留大空白） */
+        html.hide-title-divider .xhs-card.knowledge-card .divider{
+            height: 0 !important;
+            margin: 0 !important;
+            border-top-color: transparent !important;
+            border-bottom-color: transparent !important;
+            opacity: 0 !important;
+        }
+
+        /* ===== 风格面板右上角开关（不占布局，绝对定位） ===== */
+        .style-group{ position: relative; }
+        .style-inline-toggle{
+            position: absolute;
+            /* 与“点击选择风格”同一行对齐，不再被 Tabs 遮挡 */
+            top: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
+            pointer-events: auto;
+        }
+        .style-inline-toggle .toggle-label{
+            font-size: 12px;
+            color: #666;
+            font-weight: 700;
+        }
+        .switch{
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+        .switch input{ opacity: 0; width: 0; height: 0; }
+        .switch .slider{
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #d1d5db;
+            transition: .2s;
+            border-radius: 999px;
+        }
+        .switch .slider:before{
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 2px; top: 2px;
+            background: white;
+            transition: .2s;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+        }
+        .switch input:checked + .slider{ background: var(--primary-color); }
+        .switch input:checked + .slider:before{ transform: translateX(20px); }
+
         /* 贴纸 */
         .sticker-item { position: absolute; cursor: move; z-index: 50; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
         .sticker-item:hover { transform: scale(1.05); border: 1px dashed #ccc; }
@@ -330,6 +397,16 @@
         linear-gradient(180deg, #FFF9F2, #FFF3E8) !important;
 }
 .paper-lined { background-image: repeating-linear-gradient(transparent, transparent 39px, var(--line-color) 40px); background-size: 100% 40px; padding: 0 35px !important; padding-top: 125px !important; }
+        /* 知识卡使用 paper-lined 时：不沿用「经典卡」的 125px 顶部留白，避免标题/正文错位 */
+        .xhs-card.knowledge-card.paper-lined{
+            padding: var(--card-padding) !important;
+            background-image: repeating-linear-gradient(
+                transparent,
+                transparent calc(var(--row-height) - 1px),
+                var(--line-color) var(--row-height)
+            ) !important;
+            background-size: 100% var(--row-height) !important;
+        }
         .paper-lined .card-header { position: absolute; top: 40px; left: 35px; right: 35px; margin: 0; border: none; padding: 0; height: auto; }
         .paper-lined .main-title { background: var(--bg-color); padding: 5px 10px; border-bottom: 3px solid var(--text-primary); }
         .paper-phone { padding-top: 60px !important; background-image: none !important; }
