@@ -57,24 +57,27 @@
 </div>
 </div>
 <div class="panel-content" id="tab-style">
-<div class="control-group">
+<div class="control-group style-group">
 <div class="group-title">点击选择风格</div>
+<!-- 不占位开关：控制「标题下方粗横线」显示/隐藏（不影响布局稳定性） -->
+<div class="inline-toggle" id="dividerToggleWrap" title="控制标题下方粗横线显示/隐藏">
+  <span class="inline-toggle__label">横线显示</span>
+  <label class="ui-switch">
+    <input type="checkbox" id="dividerToggle" checked>
+    <span class="ui-switch__track"></span>
+    <span class="ui-switch__thumb"></span>
+  </label>
+</div>
 <div class="visual-selector">
 <div class="visual-opt active" onclick="setPaperStyle('default', this)"><div class="visual-preview" style="background:#FDFBF7"></div><div class="visual-label">极简</div></div>
 <div class="visual-opt" onclick="setPaperStyle('xhs-note', this)"><div class="visual-preview vp-xhs-note"></div><div class="visual-label">小红书暖光</div></div>
 
 <div class="visual-opt" onclick="setPaperStyle('lined', this)"><div class="visual-preview vp-lined"></div><div class="visual-label">横线</div></div>
 <div class="visual-opt" onclick="setPaperStyle('phone', this)"><div class="visual-preview" style="background:#f7f7f7; border-top:5px solid #eee;"></div><div class="visual-label">备忘录</div></div>
-
-<!-- ✅ 已删除：便签（yellow） -->
-
 <div class="visual-opt" onclick="setPaperStyle('grid-browser', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">网格</div></div>
 <div class="visual-opt" onclick="setPaperStyle('gold', this)"><div class="visual-preview vp-gold"></div><div class="visual-label">金色</div></div>
 <div class="visual-opt" onclick="setPaperStyle('macos', this)"><div class="visual-preview vp-mac"></div><div class="visual-label">Mac</div></div>
 <div class="visual-opt" onclick="setPaperStyle('yellow-app', this)"><div class="visual-preview" style="background:#FDFCF6; border-top:3px solid orange;"></div><div class="visual-label">APP</div></div>
-
-<!-- ✅ 已删除：圆角（rounded） -->
-
 <div class="visual-opt" onclick="setPaperStyle('mac-grid', this)"><div class="visual-preview" style="background:#fff; border-top:8px solid #eee;"></div><div class="visual-label">Mac网</div></div>
 <div class="visual-opt" onclick="setPaperStyle('texture', this)"><div class="visual-preview" style="background:#f0f0f0;"></div><div class="visual-label">纹理</div></div>
 <div class="visual-opt" onclick="setPaperStyle('draft-grid', this)"><div class="visual-preview vp-grid"></div><div class="visual-label">工程</div></div>
@@ -218,6 +221,7 @@
 <button class="btn btn-secondary" onclick="resetData()" style="color:red;">重置所有数据</button>
 </div>
 </div>
+
 
 <script src="data.js"></script>
 <script src="app.js"></script>
