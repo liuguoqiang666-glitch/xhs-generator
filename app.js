@@ -1001,28 +1001,27 @@ window.addEventListener('DOMContentLoaded', ()=>{
   // 同步滑块label
   knowledgeSetScale(document.getElementById('knowledgeScale').value);
 
-  // 标题下方粗横线（知识卡 divider）开关：默认显示；关闭时不改变布局占位
-  try{
-    const KEY = 'lf_titleDividerOn';
-    const toggle = document.getElementById('titleDividerToggle');
-    const saved = localStorage.getItem(KEY);
-    const isOn = (saved === null) ? true : (saved === '1');
-
-    const apply = (on)=>{
-      document.documentElement.classList.toggle('hide-title-divider', !on);
-      document.documentElement.style.setProperty('--title-divider-on', on ? '1' : '0');
-      try{ localStorage.setItem(KEY, on ? '1' : '0'); }catch(e){}
-    };
-
-    if(toggle){
-      toggle.checked = isOn;
-      apply(isOn);
-      toggle.addEventListener('change', ()=> apply(!!toggle.checked));
-    }else{
-      apply(isOn);
-    }
-  }catch(e){}
+  // 初始化：标题下方粗横线显示开关（仅影响知识模版的 .divider，不影响其它布局）
+  try{ initDividerToggle(); }catch(e){}
 });
+
+// ===== 标题下方粗横线（divider）显示开关 =====
+function initDividerToggle(){
+  const toggle = document.getElementById('dividerToggle');
+  if(!toggle) return;
+
+  const KEY = 'lf_show_divider';
+  const saved = localStorage.getItem(KEY);
+  const isOn = (saved === null) ? true : (saved === '1');
+  toggle.checked = !!isOn;
+  document.body.classList.toggle('hide-kt-divider', !isOn);
+
+  toggle.addEventListener('change', ()=>{
+    const on = !!toggle.checked;
+    localStorage.setItem(KEY, on ? '1' : '0');
+    document.body.classList.toggle('hide-kt-divider', !on);
+  });
+}
 
 
 // ===== UI helpers (scoped, no business logic changes) =====
